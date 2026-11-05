@@ -11,10 +11,16 @@ import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import SettingsIcon from "@mui/icons-material/Settings";
 import { ClueIcon } from "./icons/Clue";
+import { DamageIcon } from "./icons/Damage";
+import { DiceIcon } from "./icons/Dice";
 import { DoomIcon } from "./icons/Doom";
 import { GateIcon } from "./icons/Gate";
+import { HorrorIcon } from "./icons/Horror";
+import { InvisibleIcon } from "./icons/Invisible";
 import { ReckoningIcon } from "./icons/Reckoning";
-import type { GroupNames } from "../types";
+import { ResetIcon } from "./icons/Reset";
+import { VisibleIcon } from "./icons/Visible";
+import type { GroupIcons, GroupNames } from "../types";
 import { UNASSIGNED_GROUP_ID } from "../utils/metadata";
 
 export interface CharacterGroupInfo {
@@ -22,6 +28,23 @@ export interface CharacterGroupInfo {
   defaultName: string;
   Icon?: typeof ClueIcon;
 }
+
+/** Icons a group can use, by the key saved in the scene metadata */
+export const GROUP_ICONS: Record<
+  string,
+  { label: string; Icon: typeof ClueIcon }
+> = {
+  clue: { label: "Clue", Icon: ClueIcon },
+  damage: { label: "Damage", Icon: DamageIcon },
+  dice: { label: "Dice", Icon: DiceIcon },
+  doom: { label: "Doom", Icon: DoomIcon },
+  gate: { label: "Gate", Icon: GateIcon },
+  horror: { label: "Horror", Icon: HorrorIcon },
+  invisible: { label: "Invisible", Icon: InvisibleIcon },
+  reckoning: { label: "Reckoning", Icon: ReckoningIcon },
+  reset: { label: "Reset", Icon: ResetIcon },
+  visible: { label: "Visible", Icon: VisibleIcon },
+};
 
 export const CHARACTER_GROUPS: CharacterGroupInfo[] = [
   { id: 1, defaultName: "Investigators", Icon: ClueIcon },
@@ -41,30 +64,30 @@ export const ALL_GROUPS: CharacterGroupInfo[] = [
   UNASSIGNED_GROUP,
 ];
 
+/** Key of the group's icon: the custom one, or the key of its default icon */
+export const getGroupIconKey = (
+  group: CharacterGroupInfo,
+  groupIcons: GroupIcons,
+): string | undefined => {
+  const custom = groupIcons[group.id];
+  if (custom && GROUP_ICONS[custom]) return custom;
+  return Object.keys(GROUP_ICONS).find(
+    (key) => GROUP_ICONS[key].Icon === group.Icon,
+  );
+};
+
+export const getGroupIcon = (
+  group: CharacterGroupInfo,
+  groupIcons: GroupIcons,
+): CharacterGroupInfo["Icon"] => {
+  const key = getGroupIconKey(group, groupIcons);
+  return key ? GROUP_ICONS[key].Icon : undefined;
+};
+
 export const getGroupName = (
   group: CharacterGroupInfo,
   groupNames: GroupNames,
 ): string => groupNames[group.id]?.trim() || group.defaultName;
-
-/** Groups from top to bottom. Groups missing from the saved order go last, in their default order. */
-export const sortGroups = (groupOrder: number[]): CharacterGroupInfo[] => {
-  const position = (group: CharacterGroupInfo) => {
-    const index = groupOrder.indexOf(group.id);
-    return index === -1 ? groupOrder.length + group.id : index;
-  };
-  return [...CHARACTER_GROUPS].sort((a, b) => position(a) - position(b));
-};
-
-/** Moves a group to the place of another one, the groups in between shift to make room */
-export const moveGroup = (
-  groupIds: number[],
-  movedId: number,
-  targetId: number,
-): number[] => {
-  const nextIds = groupIds.filter((id) => id !== movedId);
-  nextIds.splice(groupIds.indexOf(targetId), 0, movedId);
-  return nextIds;
-};
 
 export interface GroupReorderProps {
   isDragging: boolean;
@@ -84,6 +107,8 @@ interface CharacterGroupProps {
   Icon: CharacterGroupInfo["Icon"];
   /** Only the GM can change the settings of a group */
   onSettings?: () => void;
+  /** Whether the group is playing its turn */
+  isActive?: boolean;
   /** Only the GM can change the order of the groups */
   reorder?: GroupReorderProps;
   children: ReactNode;
@@ -95,6 +120,7 @@ export function CharacterGroup({
   hiddenCount,
   Icon,
   onSettings,
+  isActive,
   reorder,
   children,
 }: CharacterGroupProps) {
@@ -104,6 +130,8 @@ export function CharacterGroup({
       disableGutters
       sx={{
         mb: 2,
+        border: 2,
+        borderColor: isActive ? "primary.main" : "transparent",
         opacity: reorder?.isDragging ? 0.5 : 1,
         outline: reorder?.isDropTarget ? "2px dashed" : "none",
       }}
@@ -112,11 +140,20 @@ export function CharacterGroup({
           ? (e) => {
               // Allows the drop, otherwise the browser doesn't fire it
               e.preventDefault();
+              // The zone holding the group has its own drop handlers
+              e.stopPropagation();
               reorder.onDragOver();
             }
           : undefined
       }
-      onDrop={reorder?.onDrop}
+      onDrop={
+        reorder
+          ? (e) => {
+              e.stopPropagation();
+              reorder.onDrop();
+            }
+          : undefined
+      }
     >
       <AccordionSummary
         expandIcon={<ExpandMoreIcon />}

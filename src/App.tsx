@@ -4,7 +4,7 @@ import OBR, { type Item } from "@owlbear-rodeo/sdk";
 import { CharacterList } from "./components/CharacterList";
 import { useReassignOrphanedCharacters } from "./hooks/useReassignOrphanedCharacters";
 import { useAssignDefaultGroups } from "./hooks/useAssignDefaultGroups";
-import { getGroupNames, getGroupOrder, getRound } from "./utils/metadata";
+import { getGroupIcons, getGroupNames, getScene } from "./utils/metadata";
 import type { Character, GameState } from "./types";
 
 type PluginState = "loading" | "ready" | "error";
@@ -14,8 +14,14 @@ const INITIAL_GAME_STATE: GameState = {
   players: [],
   characters: [],
   groupNames: {},
-  groupOrder: [],
-  round: 1,
+  groupIcons: {},
+  scene: {
+    active: false,
+    round: 1,
+    turnGroup: null,
+    roundGroups: [],
+    groupOrder: [],
+  },
   isGM: false,
 };
 
@@ -36,8 +42,8 @@ async function loadGameState(): Promise<GameState> {
     players,
     characters,
     groupNames: getGroupNames(sceneMetadata),
-    groupOrder: getGroupOrder(sceneMetadata),
-    round: getRound(sceneMetadata),
+    groupIcons: getGroupIcons(sceneMetadata),
+    scene: getScene(sceneMetadata),
     isGM,
   };
 }
@@ -72,8 +78,8 @@ function App() {
             setGameState((prev) => ({
               ...prev,
               groupNames: getGroupNames(metadata),
-              groupOrder: getGroupOrder(metadata),
-              round: getRound(metadata),
+              groupIcons: getGroupIcons(metadata),
+              scene: getScene(metadata),
             }));
           });
         } catch (err) {

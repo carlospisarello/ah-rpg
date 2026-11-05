@@ -27,7 +27,7 @@ import {
 } from "../utils/metadata";
 import { CharacterName } from "./CharacterName";
 import { DamageIcon, DiceIcon, HorrorIcon } from "./CounterIcons";
-import { ALL_GROUPS, getGroupName } from "./CharacterGroup";
+import { ALL_GROUPS, getGroupIcon, getGroupName } from "./CharacterGroup";
 
 interface CharacterItemProps {
   character: Character;
@@ -187,6 +187,11 @@ export function CharacterItem({ character, gameState }: CharacterItemProps) {
   // Horror dice are counted from the left
   const isHorrorDie = (index: number) => index < counterData.horrorLimit;
 
+  const renderGroupIcon = (group: (typeof ALL_GROUPS)[number]) => {
+    const Icon = getGroupIcon(group, gameState.groupIcons);
+    return Icon && <Icon />;
+  };
+
   return (
     <Card
       variant="outlined"
@@ -327,7 +332,10 @@ export function CharacterItem({ character, gameState }: CharacterItemProps) {
             >
               {ALL_GROUPS.map((group) => (
                 <MenuItem key={group.id} value={group.id}>
-                  {getGroupName(group, gameState.groupNames)}
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    {renderGroupIcon(group)}
+                    <span>{getGroupName(group, gameState.groupNames)}</span>
+                  </Stack>
                 </MenuItem>
               ))}
             </Select>

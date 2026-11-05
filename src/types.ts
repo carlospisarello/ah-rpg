@@ -18,11 +18,26 @@ export interface GameState {
   players: Player[];
   characters: Character[];
   groupNames: GroupNames;
-  /** Group ids from top to bottom, see sortGroups */
-  groupOrder: number[];
-  round: number;
+  groupIcons: GroupIcons;
+  scene: SceneState;
   isGM: boolean;
 }
+
+/** The structured scene, shared by every client in the scene */
+export interface SceneState {
+  /** Whether a structured scene is running, the round counter is only shown then */
+  active: boolean;
+  round: number;
+  /** Group playing its turn, null when no group is in the round counter */
+  turnGroup: number | null;
+  /** Groups inside the round counter, in turn order */
+  roundGroups: number[];
+  /** Groups outside the round counter from top to bottom */
+  groupOrder: number[];
+}
+
+/** Custom group icon keys, by group id. Groups without an entry keep their default icon. */
+export type GroupIcons = Record<number, string>;
 
 /** Custom group names, by group id. Groups without an entry keep their default name. */
 export type GroupNames = Record<number, string>;

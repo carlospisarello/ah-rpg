@@ -14,19 +14,27 @@ import {
   Stack,
   TextField,
 } from "@mui/material";
-import type { Character, GroupNames } from "../types";
+import type { Character, GroupIcons, GroupNames } from "../types";
 import {
   getGroup,
   updateCounterData,
+  updateGroupIcons,
   updateGroupNames,
 } from "../utils/metadata";
-import { ALL_GROUPS, UNASSIGNED_GROUP, getGroupName } from "./CharacterGroup";
+import {
+  ALL_GROUPS,
+  GROUP_ICONS,
+  UNASSIGNED_GROUP,
+  getGroupIconKey,
+  getGroupName,
+} from "./CharacterGroup";
 import type { CharacterGroupInfo } from "./CharacterGroup";
 
 interface GroupSettingsDialogProps {
   group: CharacterGroupInfo;
   characters: Character[];
   groupNames: GroupNames;
+  groupIcons: GroupIcons;
   onClose: () => void;
 }
 
@@ -34,6 +42,7 @@ export function GroupSettingsDialog({
   group,
   characters,
   groupNames,
+  groupIcons,
   onClose,
 }: GroupSettingsDialogProps) {
   const initialName = getGroupName(group, groupNames);
@@ -41,16 +50,20 @@ export function GroupSettingsDialog({
     .filter((character) => getGroup(character) === group.id)
     .map((character) => character.id);
 
+  const initialIconKey = getGroupIconKey(group, groupIcons) ?? "";
+  const [iconKey, setIconKey] = useState(initialIconKey);
   const [name, setName] = useState(initialName);
   const [memberIds, setMemberIds] = useState(initialMemberIds);
 
   const trimmedName = name.trim();
   const hasNameChange = trimmedName !== initialName;
+  const hasIconChange = iconKey !== initialIconKey;
   const hasMembershipChange =
     memberIds.length !== initialMemberIds.length ||
     memberIds.some((id) => !initialMemberIds.includes(id));
   const canAccept =
-    (hasNameChange || hasMembershipChange) && trimmedName !== "";
+    (hasNameChange || hasIconChange || hasMembershipChange) &&
+    trimmedName !== "";
 
   const handleAccept = async () => {
     const addedIds = memberIds.filter((id) => !initialMemberIds.includes(id));
@@ -59,6 +72,9 @@ export function GroupSettingsDialog({
     try {
       if (hasNameChange) {
         await updateGroupNames({ ...groupNames, [group.id]: trimmedName });
+      }
+      if (hasIconChange) {
+        await updateGroupIcons({ ...groupIcons, [group.id]: iconKey });
       }
       await Promise.all([
         ...addedIds.map((id) => updateCounterData(id, { group: group.id })),
@@ -83,6 +99,24 @@ export function GroupSettingsDialog({
             onChange={(e) => setName(e.target.value)}
             fullWidth
           />
+          <FormControl fullWidth>
+            <InputLabel id="group-icon-label">Icon</InputLabel>
+            <Select
+              labelId="group-icon-label"
+              label="Icon"
+              value={iconKey}
+              onChange={(e) => setIconKey(e.target.value)}
+            >
+              {Object.entries(GROUP_ICONS).map(([key, { label, Icon }]) => (
+                <MenuItem key={key} value={key}>
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    <Icon />
+                    <span>{label}</span>
+                  </Stack>
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
           <FormControl fullWidth>
             <InputLabel id="group-characters-label">Characters</InputLabel>
             <Select

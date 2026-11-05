@@ -1,5 +1,11 @@
 import OBR, { type Metadata } from "@owlbear-rodeo/sdk";
-import type { Character, CounterData, GroupNames } from "../types";
+import type {
+  Character,
+  CounterData,
+  GroupIcons,
+  GroupNames,
+  SceneState,
+} from "../types";
 
 const METADATA_PREFIX = "ah-rpg-dice";
 
@@ -13,8 +19,12 @@ export const UNASSIGNED_GROUP_ID = 5;
 /** Scene metadata, shared by every client in the scene */
 export const sceneMetadataKeys = {
   groupNames: `${METADATA_PREFIX}/group-names`,
+  groupIcons: `${METADATA_PREFIX}/group-icons`,
   groupOrder: `${METADATA_PREFIX}/group-order`,
   round: `${METADATA_PREFIX}/round`,
+  structuredScene: `${METADATA_PREFIX}/structured-scene`,
+  turnGroup: `${METADATA_PREFIX}/turn-group`,
+  roundGroups: `${METADATA_PREFIX}/round-groups`,
 };
 
 export const getGroupNames = (metadata: Metadata): GroupNames =>
@@ -24,19 +34,29 @@ export async function updateGroupNames(groupNames: GroupNames): Promise<void> {
   await OBR.scene.setMetadata({ [sceneMetadataKeys.groupNames]: groupNames });
 }
 
-/** Group ids from top to bottom, see sortGroups */
-export const getGroupOrder = (metadata: Metadata): number[] =>
-  (metadata[sceneMetadataKeys.groupOrder] as number[]) || [];
+export const getGroupIcons = (metadata: Metadata): GroupIcons =>
+  (metadata[sceneMetadataKeys.groupIcons] as GroupIcons) || {};
 
-export async function updateGroupOrder(groupOrder: number[]): Promise<void> {
-  await OBR.scene.setMetadata({ [sceneMetadataKeys.groupOrder]: groupOrder });
+export async function updateGroupIcons(groupIcons: GroupIcons): Promise<void> {
+  await OBR.scene.setMetadata({ [sceneMetadataKeys.groupIcons]: groupIcons });
 }
 
-export const getRound = (metadata: Metadata): number =>
-  (metadata[sceneMetadataKeys.round] as number) || 1;
+export const getScene = (metadata: Metadata): SceneState => ({
+  active: (metadata[sceneMetadataKeys.structuredScene] as boolean) || false,
+  round: (metadata[sceneMetadataKeys.round] as number) || 1,
+  turnGroup: (metadata[sceneMetadataKeys.turnGroup] as number | null) ?? null,
+  roundGroups: (metadata[sceneMetadataKeys.roundGroups] as number[]) || [],
+  groupOrder: (metadata[sceneMetadataKeys.groupOrder] as number[]) || [],
+});
 
-export async function updateRound(round: number): Promise<void> {
-  await OBR.scene.setMetadata({ [sceneMetadataKeys.round]: round });
+export async function updateScene(scene: SceneState): Promise<void> {
+  await OBR.scene.setMetadata({
+    [sceneMetadataKeys.structuredScene]: scene.active,
+    [sceneMetadataKeys.round]: scene.round,
+    [sceneMetadataKeys.turnGroup]: scene.turnGroup,
+    [sceneMetadataKeys.roundGroups]: scene.roundGroups,
+    [sceneMetadataKeys.groupOrder]: scene.groupOrder,
+  });
 }
 
 export const metadataKeys = {
