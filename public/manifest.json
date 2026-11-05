@@ -1,0 +1,14 @@
+{
+  "name": "AH-RPG Dice",
+  "version": "1.0.0",
+  "manifest_version": 1,
+  "description": "A dice roller for AH-RPG games.",
+  "author": "Alcoth",
+  "action": {
+    "title": "AH-RPG Dice",
+    "icon": "/dice.svg",
+    "popover": "/",
+    "height":1200,
+    "width": 600
+  }
+}
