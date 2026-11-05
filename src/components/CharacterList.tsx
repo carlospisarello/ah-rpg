@@ -3,8 +3,9 @@ import { Button, Container, Typography, Box } from "@mui/material";
 import type { Character, GameState } from "../types";
 import { CharacterItem } from "./CharacterItem";
 import {
-  ALL_GROUPS,
-  CHARACTER_GROUPS,
+  getAllGroups,
+  getCharacterGroups,
+  getNextGroupId,
   CharacterGroup,
   UNASSIGNED_GROUP,
   getGroupIcon,
@@ -12,6 +13,7 @@ import {
 } from "./CharacterGroup";
 import type { CharacterGroupInfo } from "./CharacterGroup";
 import { StructuredSceneDialog } from "./StructuredSceneDialog";
+import { CreateGroupDialog } from "./CreateGroupDialog";
 import { GroupSettingsDialog } from "./GroupSettingsDialog";
 import { RoundCounter } from "./RoundCounter";
 import {
@@ -46,6 +48,7 @@ export function CharacterList({ gameState }: CharacterListProps) {
     groupId: number | null;
   } | null>(null);
   const [isStartingScene, setIsStartingScene] = useState(false);
+  const [isCreatingGroup, setIsCreatingGroup] = useState(false);
 
   if (!gameState.currentPlayer) {
     return (
@@ -85,11 +88,15 @@ export function CharacterList({ gameState }: CharacterListProps) {
           Number(isAssignedToCurrentPlayer(a)),
       );
 
-  const editingGroup = ALL_GROUPS.find((group) => group.id === editingGroupId);
+  const editingGroup = getAllGroups(gameState.scene.customGroups).find(
+    (group) => group.id === editingGroupId,
+  );
 
   const scene = normalizeScene(gameState.scene);
   const groupById = (id: number) =>
-    CHARACTER_GROUPS.find((group) => group.id === id) as CharacterGroupInfo;
+    getCharacterGroups(scene.customGroups).find(
+      (group) => group.id === id,
+    ) as CharacterGroupInfo;
 
   const applyChange = async ({
     scene: nextScene,
@@ -271,12 +278,33 @@ export function CharacterList({ gameState }: CharacterListProps) {
           {scene.groupOrder.map((id) => renderGroup(groupById(id), "outside"))}
         </Box>
         {renderGroup(UNASSIGNED_GROUP, null)}
+        {gameState.isGM && (
+          <Button
+            fullWidth
+            variant="outlined"
+            onClick={() => setIsCreatingGroup(true)}
+          >
+            Create group
+          </Button>
+        )}
       </Box>
+      {isCreatingGroup && (
+        <CreateGroupDialog
+          characters={gameState.characters}
+          groupNames={gameState.groupNames}
+          groupIcons={gameState.groupIcons}
+          customGroups={scene.customGroups}
+          nextGroupId={getNextGroupId(scene.customGroups)}
+          scene={scene}
+          onClose={() => setIsCreatingGroup(false)}
+        />
+      )}
       {isStartingScene && (
         <StructuredSceneDialog
           characters={gameState.characters}
           groupNames={gameState.groupNames}
           groupIcons={gameState.groupIcons}
+          customGroups={scene.customGroups}
           onCancel={() => setIsStartingScene(false)}
           onAccept={(selectedIds) => {
             setIsStartingScene(false);
@@ -290,6 +318,7 @@ export function CharacterList({ gameState }: CharacterListProps) {
           characters={gameState.characters}
           groupNames={gameState.groupNames}
           groupIcons={gameState.groupIcons}
+          customGroups={scene.customGroups}
           onClose={() => setEditingGroupId(null)}
         />
       )}

@@ -34,6 +34,8 @@ export interface SceneState {
   roundGroups: number[];
   /** Groups outside the round counter from top to bottom */
   groupOrder: number[];
+  /** Ids of the groups created by the GM, besides the default ones */
+  customGroups: number[];
 }
 
 /** Custom group icon keys, by group id. Groups without an entry keep their default icon. */

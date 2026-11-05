@@ -13,12 +13,17 @@ import {
 } from "@mui/material";
 import type { Character, GroupIcons, GroupNames } from "../types";
 import { getGroup, isCharacterVisible } from "../utils/metadata";
-import { CHARACTER_GROUPS, getGroupIcon, getGroupName } from "./CharacterGroup";
+import {
+  getCharacterGroups,
+  getGroupIcon,
+  getGroupName,
+} from "./CharacterGroup";
 
 interface StructuredSceneDialogProps {
   characters: Character[];
   groupNames: GroupNames;
   groupIcons: GroupIcons;
+  customGroups: number[];
   onAccept: (selectedIds: number[]) => void;
   onCancel: () => void;
 }
@@ -27,9 +32,11 @@ export function StructuredSceneDialog({
   characters,
   groupNames,
   groupIcons,
+  customGroups,
   onAccept,
   onCancel,
 }: StructuredSceneDialogProps) {
+  const groups = getCharacterGroups(customGroups);
   const [selected, setSelected] = useState<number[]>([]);
 
   const toggle = (id: number) =>
@@ -44,7 +51,7 @@ export function StructuredSceneDialog({
         <Stack direction="row" spacing={1} sx={{ mb: 1 }}>
           <Button
             size="small"
-            onClick={() => setSelected(CHARACTER_GROUPS.map((g) => g.id))}
+            onClick={() => setSelected(groups.map((g) => g.id))}
           >
             Select all
           </Button>
@@ -53,7 +60,7 @@ export function StructuredSceneDialog({
           </Button>
         </Stack>
         <FormGroup>
-          {CHARACTER_GROUPS.map((group) => {
+          {groups.map((group) => {
             const { id, defaultName } = group;
             const Icon = getGroupIcon(group, groupIcons);
             const groupCharacters = characters.filter(

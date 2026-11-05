@@ -22,7 +22,7 @@ import {
   updateGroupNames,
 } from "../utils/metadata";
 import {
-  ALL_GROUPS,
+  getAllGroups,
   GROUP_ICONS,
   UNASSIGNED_GROUP,
   getGroupIconKey,
@@ -35,6 +35,7 @@ interface GroupSettingsDialogProps {
   characters: Character[];
   groupNames: GroupNames;
   groupIcons: GroupIcons;
+  customGroups: number[];
   onClose: () => void;
 }
 
@@ -43,6 +44,7 @@ export function GroupSettingsDialog({
   characters,
   groupNames,
   groupIcons,
+  customGroups,
   onClose,
 }: GroupSettingsDialogProps) {
   const initialName = getGroupName(group, groupNames);
@@ -134,7 +136,7 @@ export function GroupSettingsDialog({
               renderValue={(selected) => `${selected.length} selected`}
             >
               {characters.map((character) => {
-                const currentGroup = ALL_GROUPS.find(
+                const currentGroup = getAllGroups(customGroups).find(
                   (g) => g.id === getGroup(character),
                 );
                 return (

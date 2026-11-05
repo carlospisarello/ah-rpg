@@ -7,10 +7,11 @@ export interface SceneChange {
   refillGroupIds: number[];
 }
 
-const ALL_IDS = CHARACTER_GROUPS.map((group) => group.id);
+const DEFAULT_IDS = CHARACTER_GROUPS.map((group) => group.id);
 
 /** Drops unknown groups and appends the ones missing from the saved order, in their default order */
 export function normalizeScene(scene: SceneState): SceneState {
+  const ALL_IDS = [...DEFAULT_IDS, ...scene.customGroups];
   const roundGroups = scene.active
     ? scene.roundGroups.filter((id) => ALL_IDS.includes(id))
     : [];
@@ -44,6 +45,7 @@ export function startScene(
       turnGroup: roundGroups[0] ?? null,
       roundGroups,
       groupOrder: groupOrder.filter((id) => !roundGroups.includes(id)),
+      customGroups: scene.customGroups,
     },
     refillGroupIds: roundGroups,
   };
@@ -59,6 +61,7 @@ export function endScene(scene: SceneState): SceneChange {
       turnGroup: null,
       roundGroups: [],
       groupOrder: [...roundGroups, ...groupOrder],
+      customGroups: scene.customGroups,
     },
     refillGroupIds: [],
   };
@@ -162,5 +165,20 @@ export function moveGroupInScene(
   return {
     scene: { ...scene, roundGroups, groupOrder, turnGroup },
     refillGroupIds: entered ? [movedId] : [],
+  };
+}
+
+/** Adds a new group at the bottom of the groups outside the round counter */
+export function addGroupToScene(
+  scene: SceneState,
+  groupId: number,
+): SceneState {
+  const current = normalizeScene(scene);
+  return {
+    ...scene,
+    customGroups: [...scene.customGroups, groupId],
+    roundGroups: current.roundGroups,
+    groupOrder: [...current.groupOrder, groupId],
+    turnGroup: current.turnGroup,
   };
 }

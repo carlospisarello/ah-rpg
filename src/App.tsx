@@ -21,6 +21,7 @@ const INITIAL_GAME_STATE: GameState = {
     turnGroup: null,
     roundGroups: [],
     groupOrder: [],
+    customGroups: [],
   },
   isGM: false,
 };

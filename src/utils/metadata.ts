@@ -25,6 +25,7 @@ export const sceneMetadataKeys = {
   structuredScene: `${METADATA_PREFIX}/structured-scene`,
   turnGroup: `${METADATA_PREFIX}/turn-group`,
   roundGroups: `${METADATA_PREFIX}/round-groups`,
+  customGroups: `${METADATA_PREFIX}/custom-groups`,
 };
 
 export const getGroupNames = (metadata: Metadata): GroupNames =>
@@ -47,6 +48,7 @@ export const getScene = (metadata: Metadata): SceneState => ({
   turnGroup: (metadata[sceneMetadataKeys.turnGroup] as number | null) ?? null,
   roundGroups: (metadata[sceneMetadataKeys.roundGroups] as number[]) || [],
   groupOrder: (metadata[sceneMetadataKeys.groupOrder] as number[]) || [],
+  customGroups: (metadata[sceneMetadataKeys.customGroups] as number[]) || [],
 });
 
 export async function updateScene(scene: SceneState): Promise<void> {
@@ -56,6 +58,7 @@ export async function updateScene(scene: SceneState): Promise<void> {
     [sceneMetadataKeys.turnGroup]: scene.turnGroup,
     [sceneMetadataKeys.roundGroups]: scene.roundGroups,
     [sceneMetadataKeys.groupOrder]: scene.groupOrder,
+    [sceneMetadataKeys.customGroups]: scene.customGroups,
   });
 }
 
