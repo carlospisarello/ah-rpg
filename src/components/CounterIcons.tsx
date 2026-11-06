@@ -1,4 +1,3 @@
-import CasinoIcon from "@mui/icons-material/Casino";
 import { DamageIcon as DamageIconSVG } from "./icons/Damage";
 import { HorrorIcon as HorrorIconSVG } from "./icons/Horror";
 import { DiceIcon as DiceIconSVG } from "./icons/Dice";

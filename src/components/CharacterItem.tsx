@@ -4,6 +4,7 @@ import {
   CardContent,
   CardHeader,
   Button,
+  IconButton,
   Select,
   MenuItem,
   Typography,
@@ -196,7 +197,6 @@ export function CharacterItem({ character, gameState }: CharacterItemProps) {
   return (
     <Card
       variant="outlined"
-      sx={{ borderColor: (theme) => theme.palette.primary.main }}
     >
       <CardHeader
         sx={{ paddingBottom: 0 }}
@@ -221,7 +221,12 @@ export function CharacterItem({ character, gameState }: CharacterItemProps) {
           {/* Control Buttons */}
           {canInteract && (
             <Stack direction="row" spacing={1} alignItems="center">
-              <HorrorIcon />
+              <IconButton
+                color="secondary"
+                onClick={handleHorrorLimitReset}
+              >
+               <HorrorIcon />
+              </IconButton>
               <ButtonGroup
                 size="small"
                 variant="contained"
@@ -240,14 +245,19 @@ export function CharacterItem({ character, gameState }: CharacterItemProps) {
                 >
                   +
                 </Button>
-                <Button
+                {/* <Button
                   disabled={counterData.horrorLimit === 0}
                   onClick={handleHorrorLimitReset}
                 >
                   <ResetIcon />
-                </Button>
+                </Button> */}
               </ButtonGroup>
-              <DamageIcon />
+              <IconButton
+                color="error"
+                onClick={handleDamageReset}
+              >
+                <DamageIcon />
+              </IconButton>
               <ButtonGroup
                 size="small"
                 variant="contained"
@@ -266,14 +276,14 @@ export function CharacterItem({ character, gameState }: CharacterItemProps) {
                 >
                   +
                 </Button>
-                <Button
-                  disabled={counterData.damage === 0}
-                  onClick={handleDamageReset}
-                >
-                  <ResetIcon />
-                </Button>
               </ButtonGroup>
-              <DiceIcon />
+              <IconButton
+                onClick={handleUsedReset}
+                color="primary"
+                disabled={counterData.used.length === 0}
+              >
+                <DiceIcon />
+              </IconButton>
               <ButtonGroup
                 size="small"
                 variant="contained"
@@ -293,16 +303,6 @@ export function CharacterItem({ character, gameState }: CharacterItemProps) {
 
           {/* Dice Display */}
           <Stack direction="row" justifyContent="space-between">
-            {canInteract && (
-              <Fab
-                onClick={handleUsedReset}
-                sx={FAB_SX}
-                color="primary"
-                disabled={counterData.used.length === 0}
-              >
-                <ResetIcon sx={DIE_ICON_SX} />
-              </Fab>
-            )}
             {Array.from({ length: counterData.limit }, (_, i) => {
               const DieIcon =
                 isDamagedDie(i) || counterData.used.includes(i)

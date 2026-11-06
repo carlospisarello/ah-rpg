@@ -56,6 +56,6 @@ export interface CounterData {
   wasVisible: boolean;
   /** "gm" or a player id */
   assignedTo: string;
-  /** Index of the character's group card, see CHARACTER_GROUPS */
+  /** Group card id, including the Unassigned group */
   group: number;
 }

@@ -1,18 +1,17 @@
 import { useEffect } from "react";
 import type { GameState } from "../types";
 import {
-  DEFAULT_GROUP,
   metadataKeys,
   UNASSIGNED_GROUP_ID,
   updateCounterData,
 } from "../utils/metadata";
 
 /**
- * Gives the default group to every character that doesn't have one yet.
+ * Gives the unassigned group to every character that doesn't have one yet.
  * Only the GM's client does it, so players don't race to write it.
  */
 export function useAssignDefaultGroups(
-  { isGM, characters, scene }: GameState,
+  { isGM, characters }: GameState,
   enabled: boolean,
 ) {
   useEffect(() => {
@@ -24,12 +23,10 @@ export function useAssignDefaultGroups(
 
     ungroupedCharacters.forEach((character) =>
       updateCounterData(character.id, {
-        group: scene.deletedGroups.includes(DEFAULT_GROUP)
-          ? UNASSIGNED_GROUP_ID
-          : DEFAULT_GROUP,
+        group: UNASSIGNED_GROUP_ID,
       }).catch((err) =>
         console.error("Failed to assign default group:", err),
       ),
     );
-  }, [enabled, isGM, characters, scene.deletedGroups]);
+  }, [enabled, isGM, characters]);
 }

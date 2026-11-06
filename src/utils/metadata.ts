@@ -11,8 +11,6 @@ const METADATA_PREFIX = "ah-rpg-dice";
 
 export const GM_ASSIGNEE = "gm";
 
-export const DEFAULT_GROUP = 1;
-
 /** The group of the characters that left their group, see UNASSIGNED_GROUP */
 export const UNASSIGNED_GROUP_ID = 5;
 
@@ -96,7 +94,7 @@ export const getAssignee = (character: Character): string =>
   (character.metadata?.[metadataKeys.assignment] as string) || GM_ASSIGNEE;
 
 export const getGroup = (character: Character): number =>
-  (character.metadata?.[metadataKeys.group] as number) || DEFAULT_GROUP;
+  (character.metadata?.[metadataKeys.group] as number) || UNASSIGNED_GROUP_ID;
 
 export async function getCounterData(
   character: Character,

@@ -31,7 +31,7 @@ async function load(entry, mocks = {}) {
 }
 
 const groupMock = `
-  export const CHARACTER_GROUPS = [1, 2, 3, 4].map(id => ({ id }));
+  export const CHARACTER_GROUPS = [1, 2].map(id => ({ id }));
 `;
 const { normalizeScene, removeGroupFromScene, startScene, endScene } = await load(
   "src/utils/structuredScene.ts",
@@ -43,7 +43,7 @@ const scene = (changes = {}) => ({
   turnGroup: 2,
   roundGroups: [1, 2, 3],
   groupOrder: [4, 6],
-  customGroups: [6],
+  customGroups: [3, 4, 6],
   deletedGroups: [],
   ...changes,
 });
@@ -74,21 +74,42 @@ test("deleting inactive or outside groups preserves the active turn and persists
   assert.ok(!startScene(endScene(deletedDefault).scene, [1, 2]).scene.roundGroups.includes(1));
   const deletedCustom = removeGroupFromScene(scene(), 6);
   assert.equal(deletedCustom.turnGroup, 2);
-  assert.deepEqual(deletedCustom.customGroups, []);
+  assert.deepEqual(deletedCustom.customGroups, [3, 4]);
   assert.ok(!normalizeScene(deletedCustom).groupOrder.includes(6));
 });
 
 test("deleted default groups stay unavailable and deleted custom ids are not reused", async () => {
-  const { getCharacterGroups, getAllGroups, getNextGroupId } = await load(
-    "src/components/CharacterGroup.tsx",
-    { "@owlbear-rodeo/sdk": "export default {};" },
+  const emptyScene = normalizeScene(scene({
+    active: false,
+    roundGroups: [],
+    groupOrder: [],
+    customGroups: [],
+  }));
+  assert.deepEqual(emptyScene.groupOrder, [1, 2]);
+
+  const {
+    getCharacterGroups,
+    getAllGroups,
+    getNextGroupId,
+    getGroupIconKey,
+  } = await load("src/components/CharacterGroup.tsx", {
+    "@owlbear-rodeo/sdk": "export default {};",
+  });
+  const defaultGroups = getCharacterGroups([], []);
+  assert.deepEqual(
+    defaultGroups.map((group) => [group.id, group.defaultName]),
+    [[1, "Investigators"], [2, "Enemies"]],
   );
-  assert.deepEqual(getCharacterGroups([6], [1, 8]).map((group) => group.id), [2, 3, 4, 6]);
-  assert.deepEqual(getAllGroups([6], [1]).map((group) => group.id), [2, 3, 4, 6, 5]);
+  assert.deepEqual(
+    defaultGroups.map((group) => getGroupIconKey(group, {})),
+    ["clue", "doom"],
+  );
+  assert.deepEqual(getCharacterGroups([6], [1, 8]).map((group) => group.id), [2, 6]);
+  assert.deepEqual(getAllGroups([6], [1]).map((group) => group.id), [2, 6, 5]);
   assert.equal(getNextGroupId([6], [1, 8]), 9);
 });
 
-test("new characters go to unassigned if the default group was deleted", async () => {
+test("characters without a group are assigned to unassigned by default", async () => {
   const updates = [];
   globalThis.__assignTest = {
     useEffect: (effect) => effect(),
@@ -97,14 +118,28 @@ test("new characters go to unassigned if the default group was deleted", async (
   const { useAssignDefaultGroups } = await load("src/hooks/useAssignDefaultGroups.ts", {
     react: "export const useEffect = effect => globalThis.__assignTest.useEffect(effect);",
     "../utils/metadata": `
-      export const DEFAULT_GROUP = 1, UNASSIGNED_GROUP_ID = 5;
+      export const UNASSIGNED_GROUP_ID = 5;
       export const metadataKeys = { group: "group" };
       export const updateCounterData = (id, value) => globalThis.__assignTest.update(id, value);
     `,
   });
-  const characters = [{ id: "new", metadata: {} }, { id: "existing", metadata: { group: 2 } }];
-  useAssignDefaultGroups({ isGM: true, characters, scene: { deletedGroups: [1] } }, true);
-  assert.deepEqual(updates, [["new", { group: 5 }]]);
+  const characters = [
+    { id: "new", metadata: {} },
+    { id: "existing", metadata: { group: 2 } },
+    { id: "also-new", metadata: {} },
+  ];
+  useAssignDefaultGroups({ isGM: true, characters }, true);
+  assert.deepEqual(updates, [
+    ["new", { group: 5 }],
+    ["also-new", { group: 5 }],
+  ]);
+});
+
+test("characters without group metadata resolve to unassigned immediately", async () => {
+  const { getGroup, UNASSIGNED_GROUP_ID } = await load("src/utils/metadata.ts", {
+    "@owlbear-rodeo/sdk": "export default {};",
+  });
+  assert.equal(getGroup({ metadata: {} }), UNASSIGNED_GROUP_ID);
 });
 
 test("deletion moves members to unassigned with GM ownership and persists scene and metadata", async () => {
@@ -119,7 +154,7 @@ test("deletion moves members to unassigned with GM ownership and persists scene 
     "ah-rpg-dice/turn-group": 2,
     "ah-rpg-dice/round-groups": [1, 2, 3],
     "ah-rpg-dice/group-order": [4, 6],
-    "ah-rpg-dice/custom-groups": [6],
+    "ah-rpg-dice/custom-groups": [3, 4, 6],
     "ah-rpg-dice/group-names": { 2: "Old", 3: "Other" },
     "ah-rpg-dice/group-icons": { 2: "dice", 3: "clue" },
   };
@@ -162,7 +197,11 @@ test("a failed character update does not persist deletion", async () => {
       getMetadata: async () => ({}),
       setMetadata: async () => { saved = true; },
       items: {
-        getItems: async () => [{ id: "a", layer: "CHARACTER", metadata: {} }],
+        getItems: async () => [{
+          id: "a",
+          layer: "CHARACTER",
+          metadata: { "ah-rpg-dice/group": 1 },
+        }],
         updateItems: async () => { throw new Error("update failed"); },
       },
     },

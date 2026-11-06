@@ -1,5 +1,5 @@
 import { useState, type DragEvent } from "react";
-import { Button, Container, Typography, Box } from "@mui/material";
+import { Button, Container, Typography, Box, Stack } from "@mui/material";
 import type { Character, GameState } from "../types";
 import { CharacterItem } from "./CharacterItem";
 import {
@@ -156,6 +156,7 @@ export function CharacterList({ gameState }: CharacterListProps) {
 
     return (
       <CharacterGroup
+        zone={zone}
         key={group.id}
         name={getGroupName(group, gameState.groupNames)}
         count={groupCharacters.length - (hiddenCount ?? 0)}
@@ -217,7 +218,7 @@ export function CharacterList({ gameState }: CharacterListProps) {
 
   return (
     <Container>
-      <Box sx={{ py: 2 }}>
+      <Stack spacing={2} py={2}>
         {!scene.active && gameState.isGM && (
           <Button
             fullWidth
@@ -229,10 +230,9 @@ export function CharacterList({ gameState }: CharacterListProps) {
           </Button>
         )}
         {scene.active && (
-          <Box
+          <Stack
             {...zoneProps("round")}
             sx={{
-              mb: 2,
               p: 2,
               border: 1,
               borderColor: "divider",
@@ -269,16 +269,18 @@ export function CharacterList({ gameState }: CharacterListProps) {
                 Drag groups here to add them to the round
               </Typography>
             )}
-            {scene.roundGroups.map((id) => renderGroup(groupById(id), "round"))}
-          </Box>
+            <Stack spacing={2}>
+              {scene.roundGroups.map((id) => renderGroup(groupById(id), "round"))}
+            </Stack>
+          </Stack>
         )}
-        <Box
+        <Stack spacing={2} 
           {...zoneProps("outside")}
           sx={{ outline: isZoneTarget("outside") ? "2px dashed" : "none" }}
         >
           {scene.groupOrder.map((id) => renderGroup(groupById(id), "outside"))}
-        </Box>
-        {renderGroup(UNASSIGNED_GROUP, null)}
+          {renderGroup(UNASSIGNED_GROUP, null)}
+        </Stack>
         {gameState.isGM && (
           <Button
             fullWidth
@@ -288,7 +290,7 @@ export function CharacterList({ gameState }: CharacterListProps) {
             Create group
           </Button>
         )}
-      </Box>
+      </Stack>
       {isCreatingGroup && (
         <CreateGroupDialog
           characters={gameState.characters}

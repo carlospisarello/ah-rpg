@@ -1,8 +1,10 @@
+import type { DropZone } from "../utils/structuredScene";
 import type { ReactNode } from "react";
 import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
+  Box,
   IconButton,
   Stack,
   Typography,
@@ -49,8 +51,6 @@ export const GROUP_ICONS: Record<
 export const CHARACTER_GROUPS: CharacterGroupInfo[] = [
   { id: 1, defaultName: "Investigators", Icon: ClueIcon },
   { id: 2, defaultName: "Enemies", Icon: DoomIcon },
-  { id: 3, defaultName: "Group 3", Icon: GateIcon },
-  { id: 4, defaultName: "Group 4", Icon: ReckoningIcon },
 ];
 
 /** Where the characters that leave their group go. Always shown last, and only to the GM. */
@@ -122,6 +122,8 @@ interface CharacterGroupProps {
   name: string;
   /** Number of characters shown in the group */
   count: number;
+  /** The current round number */
+  round?: number;
   /** Only the GM sees the characters hidden from the players */
   hiddenCount?: number;
   Icon: CharacterGroupInfo["Icon"];
@@ -132,6 +134,7 @@ interface CharacterGroupProps {
   /** Only the GM can change the order of the groups */
   reorder?: GroupReorderProps;
   children: ReactNode;
+  zone?: DropZone | null;
 }
 
 export function CharacterGroup({
@@ -143,78 +146,80 @@ export function CharacterGroup({
   isActive,
   reorder,
   children,
+  zone,
 }: CharacterGroupProps) {
   return (
-    <Accordion
-      defaultExpanded
-      disableGutters
-      sx={{
-        mb: 2,
-        border: 2,
-        borderColor: isActive ? "primary.main" : "transparent",
-        opacity: reorder?.isDragging ? 0.5 : 1,
-        outline: reorder?.isDropTarget ? "2px dashed" : "none",
-      }}
-      onDragOver={
-        reorder
-          ? (e) => {
-              // Allows the drop, otherwise the browser doesn't fire it
-              e.preventDefault();
-              // The zone holding the group has its own drop handlers
-              e.stopPropagation();
-              reorder.onDragOver();
-            }
-          : undefined
-      }
-      onDrop={
-        reorder
-          ? (e) => {
-              e.stopPropagation();
-              reorder.onDrop();
-            }
-          : undefined
-      }
-    >
-      <AccordionSummary
-        expandIcon={<ExpandMoreIcon />}
-        draggable={!!reorder}
-        onDragStart={
+    <Box> 
+      <Accordion
+        defaultExpanded
+        disableGutters={zone !== "round" && zone !== null}
+        sx={{
+          border: 2,
+          borderColor: isActive ? "primary.main" : "transparent",
+          opacity: reorder?.isDragging ? 0.5 : 1,
+          outline: reorder?.isDropTarget ? "2px dashed" : "none",
+        }}
+        onDragOver={
           reorder
             ? (e) => {
-                // Firefox doesn't start the drag without some data
-                e.dataTransfer.setData("text/plain", name);
-                e.dataTransfer.effectAllowed = "move";
-                reorder.onDragStart();
+                // Allows the drop, otherwise the browser doesn't fire it
+                e.preventDefault();
+                // The zone holding the group has its own drop handlers
+                e.stopPropagation();
+                reorder.onDragOver();
               }
             : undefined
         }
-        onDragEnd={reorder?.onDragEnd}
-      >
-        <Stack direction="row" spacing={1} alignItems="center" width="100%">
-          {reorder && <DragIndicatorIcon sx={{ cursor: "grab" }} />}
-          {Icon && <Icon />}
-          <Typography variant="h6" sx={{ flexGrow: 1 }}>
-            {name} ({count}
-            {!!hiddenCount && `, ${hiddenCount} hidden`})
-          </Typography>
-          {onSettings && (
-            <IconButton
-              size="small"
-              aria-label="Group settings"
-              // Keeps the click from toggling the accordion
-              onClick={(e) => {
+        onDrop={
+          reorder
+            ? (e) => {
                 e.stopPropagation();
-                onSettings();
-              }}
-            >
-              <SettingsIcon />
-            </IconButton>
-          )}
-        </Stack>
-      </AccordionSummary>
-      <AccordionDetails>
-        <Stack spacing={2}>{children}</Stack>
-      </AccordionDetails>
-    </Accordion>
+                reorder.onDrop();
+              }
+            : undefined
+        }
+      >
+        <AccordionSummary
+          expandIcon={<ExpandMoreIcon />}
+          draggable={!!reorder}
+          onDragStart={
+            reorder
+              ? (e) => {
+                  // Firefox doesn't start the drag without some data
+                  e.dataTransfer.setData("text/plain", name);
+                  e.dataTransfer.effectAllowed = "move";
+                  reorder.onDragStart();
+                }
+              : undefined
+          }
+          onDragEnd={reorder?.onDragEnd}
+        >
+          <Stack direction="row" spacing={1} alignItems="center" width="100%">
+            {reorder && <DragIndicatorIcon sx={{ cursor: "grab" }} />}
+            {Icon && <Icon />}
+            <Typography variant="h6" sx={{ flexGrow: 1 }}>
+              {name} ({count}
+              {!!hiddenCount && `, ${hiddenCount} hidden`})
+            </Typography>
+            {onSettings && (
+              <IconButton
+                size="small"
+                aria-label="Group settings"
+                // Keeps the click from toggling the accordion
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSettings();
+                }}
+              >
+                <SettingsIcon />
+              </IconButton>
+            )}
+          </Stack>
+        </AccordionSummary>
+        <AccordionDetails>
+          <Stack spacing={2}>{children}</Stack>
+        </AccordionDetails>
+      </Accordion>
+    </Box>
   );
 }

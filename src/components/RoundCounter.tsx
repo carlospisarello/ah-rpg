@@ -39,7 +39,7 @@ export function RoundCounter({
           <>
             <Typography variant="h6">-</Typography>
             {activeGroup.icon}
-            <Typography variant="h6">{activeGroup.name}'s turn</Typography>
+            <Typography variant="h6">{activeGroup.name} turn</Typography>
           </>
         )}
       </Stack>
