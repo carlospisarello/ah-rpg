@@ -36,6 +36,8 @@ export interface SceneState {
   groupOrder: number[];
   /** Ids of the groups created by the GM, besides the default ones */
   customGroups: number[];
+  /** Deleted group ids, retained to prevent default groups and ids from being reused */
+  deletedGroups: number[];
 }
 
 /** Custom group icon keys, by group id. Groups without an entry keep their default icon. */

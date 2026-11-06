@@ -24,6 +24,7 @@ interface StructuredSceneDialogProps {
   groupNames: GroupNames;
   groupIcons: GroupIcons;
   customGroups: number[];
+  deletedGroups: number[];
   onAccept: (selectedIds: number[]) => void;
   onCancel: () => void;
 }
@@ -33,10 +34,11 @@ export function StructuredSceneDialog({
   groupNames,
   groupIcons,
   customGroups,
+  deletedGroups,
   onAccept,
   onCancel,
 }: StructuredSceneDialogProps) {
-  const groups = getCharacterGroups(customGroups);
+  const groups = getCharacterGroups(customGroups, deletedGroups);
   const [selected, setSelected] = useState<number[]>([]);
 
   const toggle = (id: number) =>

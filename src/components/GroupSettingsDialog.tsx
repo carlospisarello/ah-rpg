@@ -1,10 +1,12 @@
 import { useState } from "react";
 import {
+  Alert,
   Button,
   Checkbox,
   Dialog,
   DialogActions,
   DialogContent,
+  DialogContentText,
   DialogTitle,
   FormControl,
   InputLabel,
@@ -21,6 +23,7 @@ import {
   updateGroupIcons,
   updateGroupNames,
 } from "../utils/metadata";
+import { deleteGroup } from "../utils/deleteGroup";
 import {
   getAllGroups,
   GROUP_ICONS,
@@ -36,6 +39,7 @@ interface GroupSettingsDialogProps {
   groupNames: GroupNames;
   groupIcons: GroupIcons;
   customGroups: number[];
+  deletedGroups: number[];
   onClose: () => void;
 }
 
@@ -45,6 +49,7 @@ export function GroupSettingsDialog({
   groupNames,
   groupIcons,
   customGroups,
+  deletedGroups,
   onClose,
 }: GroupSettingsDialogProps) {
   const initialName = getGroupName(group, groupNames);
@@ -56,6 +61,9 @@ export function GroupSettingsDialog({
   const [iconKey, setIconKey] = useState(initialIconKey);
   const [name, setName] = useState(initialName);
   const [memberIds, setMemberIds] = useState(initialMemberIds);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const trimmedName = name.trim();
   const hasNameChange = trimmedName !== initialName;
@@ -87,6 +95,19 @@ export function GroupSettingsDialog({
       onClose();
     } catch (err) {
       console.error("Failed to save group settings:", err);
+    }
+  };
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      await deleteGroup(group.id);
+      onClose();
+    } catch (err) {
+      console.error("Failed to delete group:", err);
+      setDeleteError("Failed to delete group. Please try again.");
+      setDeleting(false);
     }
   };
 
@@ -136,9 +157,10 @@ export function GroupSettingsDialog({
               renderValue={(selected) => `${selected.length} selected`}
             >
               {characters.map((character) => {
-                const currentGroup = getAllGroups(customGroups).find(
-                  (g) => g.id === getGroup(character),
-                );
+                const currentGroup = getAllGroups(
+                  customGroups,
+                  deletedGroups,
+                ).find((g) => g.id === getGroup(character));
                 return (
                   <MenuItem key={character.id} value={character.id}>
                     <Checkbox checked={memberIds.includes(character.id)} />
@@ -158,6 +180,13 @@ export function GroupSettingsDialog({
         </Stack>
       </DialogContent>
       <DialogActions>
+        <Button
+          color="error"
+          onClick={() => setConfirmDelete(true)}
+          sx={{ mr: "auto" }}
+        >
+          Delete group
+        </Button>
         <Button onClick={onClose}>Cancel</Button>
         <Button
           variant="contained"
@@ -167,6 +196,41 @@ export function GroupSettingsDialog({
           Accept
         </Button>
       </DialogActions>
+      <Dialog
+        open={confirmDelete}
+        onClose={() => {
+          if (!deleting) setConfirmDelete(false);
+        }}
+        aria-labelledby="delete-group-title"
+        aria-describedby="delete-group-description"
+        fullWidth
+        maxWidth="xs"
+      >
+        <DialogTitle id="delete-group-title">Delete group</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="delete-group-description">
+            Delete this group? This action can not be undone.
+          </DialogContentText>
+          {deleteError && (
+            <Alert severity="error" sx={{ mt: 2 }}>
+              {deleteError}
+            </Alert>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button disabled={deleting} onClick={() => setConfirmDelete(false)}>
+            Cancel
+          </Button>
+          <Button
+            color="error"
+            variant="contained"
+            disabled={deleting}
+            onClick={handleDelete}
+          >
+            Accept
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Dialog>
   );
 }

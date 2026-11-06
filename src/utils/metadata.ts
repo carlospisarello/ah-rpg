@@ -26,6 +26,7 @@ export const sceneMetadataKeys = {
   turnGroup: `${METADATA_PREFIX}/turn-group`,
   roundGroups: `${METADATA_PREFIX}/round-groups`,
   customGroups: `${METADATA_PREFIX}/custom-groups`,
+  deletedGroups: `${METADATA_PREFIX}/deleted-groups`,
 };
 
 export const getGroupNames = (metadata: Metadata): GroupNames =>
@@ -49,17 +50,23 @@ export const getScene = (metadata: Metadata): SceneState => ({
   roundGroups: (metadata[sceneMetadataKeys.roundGroups] as number[]) || [],
   groupOrder: (metadata[sceneMetadataKeys.groupOrder] as number[]) || [],
   customGroups: (metadata[sceneMetadataKeys.customGroups] as number[]) || [],
+  deletedGroups: (metadata[sceneMetadataKeys.deletedGroups] as number[]) || [],
 });
 
-export async function updateScene(scene: SceneState): Promise<void> {
-  await OBR.scene.setMetadata({
+export function sceneMetadata(scene: SceneState): Metadata {
+  return {
     [sceneMetadataKeys.structuredScene]: scene.active,
     [sceneMetadataKeys.round]: scene.round,
     [sceneMetadataKeys.turnGroup]: scene.turnGroup,
     [sceneMetadataKeys.roundGroups]: scene.roundGroups,
     [sceneMetadataKeys.groupOrder]: scene.groupOrder,
     [sceneMetadataKeys.customGroups]: scene.customGroups,
-  });
+    [sceneMetadataKeys.deletedGroups]: scene.deletedGroups,
+  };
+}
+
+export async function updateScene(scene: SceneState): Promise<void> {
+  await OBR.scene.setMetadata(sceneMetadata(scene));
 }
 
 export const metadataKeys = {

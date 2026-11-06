@@ -11,7 +11,10 @@ const DEFAULT_IDS = CHARACTER_GROUPS.map((group) => group.id);
 
 /** Drops unknown groups and appends the ones missing from the saved order, in their default order */
 export function normalizeScene(scene: SceneState): SceneState {
-  const ALL_IDS = [...DEFAULT_IDS, ...scene.customGroups];
+  const ALL_IDS = [
+    ...DEFAULT_IDS.filter((id) => !scene.deletedGroups.includes(id)),
+    ...scene.customGroups,
+  ];
   const roundGroups = scene.active
     ? scene.roundGroups.filter((id) => ALL_IDS.includes(id))
     : [];
@@ -40,6 +43,7 @@ export function startScene(
   const roundGroups = groupOrder.filter((id) => selectedIds.includes(id));
   return {
     scene: {
+      ...scene,
       active: true,
       round: 1,
       turnGroup: roundGroups[0] ?? null,
@@ -56,6 +60,7 @@ export function endScene(scene: SceneState): SceneChange {
   const { roundGroups, groupOrder } = normalizeScene(scene);
   return {
     scene: {
+      ...scene,
       active: false,
       round: 1,
       turnGroup: null,
@@ -180,5 +185,28 @@ export function addGroupToScene(
     roundGroups: current.roundGroups,
     groupOrder: [...current.groupOrder, groupId],
     turnGroup: current.turnGroup,
+  };
+}
+
+/** Removes a group without advancing the round or refilling dice. */
+export function removeGroupFromScene(
+  scene: SceneState,
+  groupId: number,
+): SceneState {
+  const current = normalizeScene(scene);
+  const index = current.roundGroups.indexOf(groupId);
+  const roundGroups = current.roundGroups.filter((id) => id !== groupId);
+  const turnGroup =
+    current.turnGroup === groupId
+      ? (roundGroups[Math.min(index, roundGroups.length - 1)] ?? null)
+      : current.turnGroup;
+
+  return {
+    ...current,
+    roundGroups,
+    turnGroup,
+    groupOrder: current.groupOrder.filter((id) => id !== groupId),
+    customGroups: current.customGroups.filter((id) => id !== groupId),
+    deletedGroups: [...current.deletedGroups, groupId],
   };
 }

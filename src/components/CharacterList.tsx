@@ -58,7 +58,7 @@ export function CharacterList({ gameState }: CharacterListProps) {
     );
   }
 
-  if (gameState.characters.length === 0) {
+  if (gameState.characters.length === 0 && !gameState.isGM) {
     return (
       <Container>
         <Box sx={{ py: 4, textAlign: "center" }}>
@@ -88,13 +88,14 @@ export function CharacterList({ gameState }: CharacterListProps) {
           Number(isAssignedToCurrentPlayer(a)),
       );
 
-  const editingGroup = getAllGroups(gameState.scene.customGroups).find(
-    (group) => group.id === editingGroupId,
-  );
+  const editingGroup = getAllGroups(
+    gameState.scene.customGroups,
+    gameState.scene.deletedGroups,
+  ).find((group) => group.id === editingGroupId);
 
   const scene = normalizeScene(gameState.scene);
   const groupById = (id: number) =>
-    getCharacterGroups(scene.customGroups).find(
+    getCharacterGroups(scene.customGroups, scene.deletedGroups).find(
       (group) => group.id === id,
     ) as CharacterGroupInfo;
 
@@ -294,7 +295,7 @@ export function CharacterList({ gameState }: CharacterListProps) {
           groupNames={gameState.groupNames}
           groupIcons={gameState.groupIcons}
           customGroups={scene.customGroups}
-          nextGroupId={getNextGroupId(scene.customGroups)}
+          nextGroupId={getNextGroupId(scene.customGroups, scene.deletedGroups)}
           scene={scene}
           onClose={() => setIsCreatingGroup(false)}
         />
@@ -305,6 +306,7 @@ export function CharacterList({ gameState }: CharacterListProps) {
           groupNames={gameState.groupNames}
           groupIcons={gameState.groupIcons}
           customGroups={scene.customGroups}
+          deletedGroups={scene.deletedGroups}
           onCancel={() => setIsStartingScene(false)}
           onAccept={(selectedIds) => {
             setIsStartingScene(false);
@@ -319,6 +321,7 @@ export function CharacterList({ gameState }: CharacterListProps) {
           groupNames={gameState.groupNames}
           groupIcons={gameState.groupIcons}
           customGroups={scene.customGroups}
+          deletedGroups={scene.deletedGroups}
           onClose={() => setEditingGroupId(null)}
         />
       )}

@@ -331,7 +331,10 @@ export function CharacterItem({ character, gameState }: CharacterItemProps) {
               onChange={(e) => handleGroupChange(Number(e.target.value))}
               size="small"
             >
-              {getAllGroups(gameState.scene.customGroups).map((group) => (
+              {getAllGroups(
+                gameState.scene.customGroups,
+                gameState.scene.deletedGroups,
+              ).map((group) => (
                 <MenuItem key={group.id} value={group.id}>
                   <Stack direction="row" spacing={1} alignItems="center">
                     {renderGroupIcon(group)}

@@ -49,7 +49,7 @@ export function CreateGroupDialog({
   const [memberIds, setMemberIds] = useState<string[]>([]);
 
   const trimmedName = name.trim();
-  const allGroups = getAllGroups(customGroups);
+  const allGroups = getAllGroups(customGroups, scene.deletedGroups);
 
   const handleAccept = async () => {
     try {

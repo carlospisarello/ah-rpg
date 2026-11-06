@@ -22,6 +22,7 @@ const INITIAL_GAME_STATE: GameState = {
     roundGroups: [],
     groupOrder: [],
     customGroups: [],
+    deletedGroups: [],
   },
   isGM: false,
 };

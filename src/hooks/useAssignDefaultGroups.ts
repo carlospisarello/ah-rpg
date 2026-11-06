@@ -3,6 +3,7 @@ import type { GameState } from "../types";
 import {
   DEFAULT_GROUP,
   metadataKeys,
+  UNASSIGNED_GROUP_ID,
   updateCounterData,
 } from "../utils/metadata";
 
@@ -11,7 +12,7 @@ import {
  * Only the GM's client does it, so players don't race to write it.
  */
 export function useAssignDefaultGroups(
-  { isGM, characters }: GameState,
+  { isGM, characters, scene }: GameState,
   enabled: boolean,
 ) {
   useEffect(() => {
@@ -22,9 +23,13 @@ export function useAssignDefaultGroups(
     );
 
     ungroupedCharacters.forEach((character) =>
-      updateCounterData(character.id, { group: DEFAULT_GROUP }).catch((err) =>
+      updateCounterData(character.id, {
+        group: scene.deletedGroups.includes(DEFAULT_GROUP)
+          ? UNASSIGNED_GROUP_ID
+          : DEFAULT_GROUP,
+      }).catch((err) =>
         console.error("Failed to assign default group:", err),
       ),
     );
-  }, [enabled, isGM, characters]);
+  }, [enabled, isGM, characters, scene.deletedGroups]);
 }

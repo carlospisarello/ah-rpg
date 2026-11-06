@@ -62,20 +62,27 @@ export const UNASSIGNED_GROUP: CharacterGroupInfo = {
 /** The default groups plus the ones created by the GM, in id order */
 export const getCharacterGroups = (
   customGroups: number[],
+  deletedGroups: number[] = [],
 ): CharacterGroupInfo[] => [
-  ...CHARACTER_GROUPS,
+  ...CHARACTER_GROUPS.filter((group) => !deletedGroups.includes(group.id)),
   ...customGroups.map((id) => ({ id, defaultName: `Group ${id}` })),
 ];
 
 /** Same as getCharacterGroups, plus the unassigned group at the end */
-export const getAllGroups = (customGroups: number[]): CharacterGroupInfo[] => [
-  ...getCharacterGroups(customGroups),
+export const getAllGroups = (
+  customGroups: number[],
+  deletedGroups: number[] = [],
+): CharacterGroupInfo[] => [
+  ...getCharacterGroups(customGroups, deletedGroups),
   UNASSIGNED_GROUP,
 ];
 
 /** The first id after every group in use, new groups never reuse an id */
-export const getNextGroupId = (customGroups: number[]): number =>
-  Math.max(UNASSIGNED_GROUP_ID, ...customGroups) + 1;
+export const getNextGroupId = (
+  customGroups: number[],
+  deletedGroups: number[] = [],
+): number =>
+  Math.max(UNASSIGNED_GROUP_ID, ...customGroups, ...deletedGroups) + 1;
 
 /** Key of the group's icon: the custom one, or the key of its default icon */
 export const getGroupIconKey = (
