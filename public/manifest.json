@@ -6,8 +6,8 @@
   "author": "Alcoth",
   "action": {
     "title": "AH-RPG Dice",
-    "icon": "/dice.svg",
-    "popover": "/",
+    "icon": "/ah-rpg/dice.svg",
+    "popover": "/ah-rpg/",
     "height":1200,
     "width": 600
   }
