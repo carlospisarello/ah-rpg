@@ -199,7 +199,7 @@ function App() {
 
   if (state === "error") {
     return (
-      <Container sx={{ py: 4 }}>
+      <Container sx={{ py: 4, minWidth: "500px" }}>
         <Alert severity="error">Error: {error}</Alert>
       </Container>
     );

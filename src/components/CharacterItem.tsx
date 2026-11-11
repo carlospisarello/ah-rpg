@@ -11,6 +11,7 @@ import {
   ButtonGroup,
   Stack,
   Fab,
+  Box,
 } from "@mui/material";
 import { DiceIcon as DiceIconNative } from "./icons/Dice";
 import CloseIcon from "@mui/icons-material/Close";
@@ -189,6 +190,13 @@ export function CharacterItem({ character, gameState }: CharacterItemProps) {
   // Horror dice are counted from the left
   const isHorrorDie = (index: number) => index < counterData.horrorLimit;
 
+  const firstRowSize =
+    counterData.limit >= 7 ? Math.ceil(counterData.limit / 2) : counterData.limit;
+  const diceRows =
+    counterData.limit >= 7
+      ? [firstRowSize, counterData.limit - firstRowSize]
+      : [firstRowSize];
+
   const renderGroupIcon = (group: CharacterGroupInfo) => {
     const Icon = getGroupIcon(group, gameState.groupIcons);
     return Icon && <Icon />;
@@ -199,7 +207,7 @@ export function CharacterItem({ character, gameState }: CharacterItemProps) {
       variant="outlined"
     >
       <CardHeader
-        sx={{ paddingBottom: 0 }}
+        sx={{ paddingBottom: 0, "& .MuiCardHeader-content": { minWidth: 0 } }}
         title={
           <CharacterName
             name={character.name}
@@ -220,108 +228,119 @@ export function CharacterItem({ character, gameState }: CharacterItemProps) {
         <Stack spacing={2} justifyContent="center">
           {/* Control Buttons */}
           {canInteract && (
-            <Stack direction="row" spacing={1} alignItems="center">
-              <IconButton
-                color="secondary"
-                onClick={handleHorrorLimitReset}
-              >
-               <HorrorIcon />
-              </IconButton>
-              <ButtonGroup
-                size="small"
-                variant="contained"
-                fullWidth
-                color="secondary"
-              >
-                <Button
-                  disabled={counterData.horrorLimit === 0}
-                  onClick={handleHorrorLimitDecrement}
-                >
-                  −
-                </Button>
-                <Button
-                  disabled={counterData.horrorLimit >= counterData.limit}
-                  onClick={handleHorrorLimitIncrement}
-                >
-                  +
-                </Button>
-                {/* <Button
-                  disabled={counterData.horrorLimit === 0}
+            <Stack direction="row" gap={1} alignItems="center" flexWrap={"wrap"}>
+              <Stack direction="row" spacing={1} flexGrow={1}>
+                <IconButton
+                  color="secondary"
                   onClick={handleHorrorLimitReset}
                 >
-                  <ResetIcon />
-                </Button> */}
-              </ButtonGroup>
-              <IconButton
-                color="error"
-                onClick={handleDamageReset}
-              >
-                <DamageIcon />
-              </IconButton>
-              <ButtonGroup
-                size="small"
-                variant="contained"
-                fullWidth
-                color="error"
-              >
-                <Button
-                  disabled={counterData.damage === 0}
-                  onClick={handleDamageDecrement}
+                <HorrorIcon />
+                </IconButton>
+                <ButtonGroup
+                  size="small"
+                  variant="contained"
+                  fullWidth
+                  color="secondary"
                 >
-                  −
-                </Button>
-                <Button
-                  disabled={counterData.damage >= counterData.limit}
-                  onClick={handleDamageIncrement}
+                  <Button
+                    disabled={counterData.horrorLimit === 0}
+                    onClick={handleHorrorLimitDecrement}
+                  >
+                    −
+                  </Button>
+                  <Button
+                    disabled={counterData.horrorLimit >= counterData.limit}
+                    onClick={handleHorrorLimitIncrement}
+                  >
+                    +
+                  </Button>
+                  {/* <Button
+                    disabled={counterData.horrorLimit === 0}
+                    onClick={handleHorrorLimitReset}
+                  >
+                    <ResetIcon />
+                  </Button> */}
+                </ButtonGroup>
+              </Stack>
+              <Stack direction="row" spacing={1} flexGrow={1}>
+                <IconButton
+                  color="error"
+                  onClick={handleDamageReset}
                 >
-                  +
-                </Button>
-              </ButtonGroup>
-              <IconButton
-                onClick={handleUsedReset}
-                color="primary"
-                disabled={counterData.used.length === 0}
-              >
-                <DiceIcon />
-              </IconButton>
-              <ButtonGroup
-                size="small"
-                variant="contained"
-                fullWidth
-                color="primary"
-              >
-                <Button
-                  onClick={handleLimitDecrement}
-                  disabled={counterData.limit <= 1}
+                  <DamageIcon />
+                </IconButton>
+                <ButtonGroup
+                  size="small"
+                  variant="contained"
+                  fullWidth
+                  color="error"
                 >
-                  −
-                </Button>
-                <Button onClick={handleLimitIncrement}>+</Button>
-              </ButtonGroup>
+                  <Button
+                    disabled={counterData.damage === 0}
+                    onClick={handleDamageDecrement}
+                  >
+                    −
+                  </Button>
+                  <Button
+                    disabled={counterData.damage >= counterData.limit}
+                    onClick={handleDamageIncrement}
+                  >
+                    +
+                  </Button>
+                </ButtonGroup>
+              </Stack>
+              <Stack direction="row" spacing={1} flexGrow={1}>
+                <IconButton
+                  onClick={handleUsedReset}
+                  color="primary"
+                  disabled={counterData.used.length === 0}
+                >
+                  <DiceIcon />
+                </IconButton>
+                <ButtonGroup
+                  size="small"
+                  variant="contained"
+                  fullWidth
+                  color="primary"
+                >
+                  <Button
+                    onClick={handleLimitDecrement}
+                    disabled={counterData.limit <= 1}
+                  >
+                    −
+                  </Button>
+                  <Button onClick={handleLimitIncrement}>+</Button>
+                </ButtonGroup>
+              </Stack>
             </Stack>
           )}
 
           {/* Dice Display */}
-          <Stack direction="row" justifyContent="space-between">
-            {Array.from({ length: counterData.limit }, (_, i) => {
-              const DieIcon =
-                isDamagedDie(i) || counterData.used.includes(i)
-                  ? CloseIcon
-                  : DiceIconNative;
-              return (
-                <Fab
-                  key={i}
-                  onClick={() => !isDamagedDie(i) && handleUsedToggle(i)}
-                  sx={DIE_FAB_SX}
-                  color={isDamagedDie(i) ? "error" : "primary"}
-                >
-                  <DieIcon
-                    sx={DIE_ICON_SX}
-                    color={isHorrorDie(i) ? "secondary" : "inherit"}
-                  />
-                </Fab>
-              );
-            })}
+          <Stack spacing={2}>
+            {diceRows.map((rowSize, rowIndex) => (
+              <Stack key={rowIndex} direction="row" justifyContent="space-evenly">
+                {Array.from({ length: rowSize }, (_, columnIndex) => {
+                  const i = rowIndex * firstRowSize + columnIndex;
+                  const DieIcon =
+                    isDamagedDie(i) || counterData.used.includes(i)
+                      ? CloseIcon
+                      : DiceIconNative;
+                  return (
+                    <Fab
+                      key={i}
+                      onClick={() => !isDamagedDie(i) && handleUsedToggle(i)}
+                      sx={DIE_FAB_SX}
+                      color={isDamagedDie(i) ? "error" : "primary"}
+                    >
+                      <DieIcon
+                        sx={DIE_ICON_SX}
+                        color={isHorrorDie(i) ? "secondary" : "inherit"}
+                      />
+                    </Fab>
+                  );
+                })}
+              </Stack>
+            ))}
           </Stack>
 
           {/* Assignment Section */}

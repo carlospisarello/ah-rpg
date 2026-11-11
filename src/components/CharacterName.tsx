@@ -30,22 +30,28 @@ export function CharacterName({
       alignItems="center"
       justifyContent="space-between"
     >
-      <Stack direction="row" spacing={1} alignItems="center">
+      <Stack direction="row" spacing={1} alignItems="center" sx={{ minWidth: 0, flex: 1 }}>
         {isGM && (
           <IconButton
             size="small"
+            sx={{ flexShrink: 0 }}
             onClick={onToggleVisibility}
             disabled={isVisibilityButtonDisabled}
           >
             {counterData.visible ? <VisibleIcon /> : <InvisibleIcon />}
           </IconButton>
         )}
-        <Typography variant="h6">
+        <Typography
+          variant="h6"
+          noWrap
+          sx={{ minWidth: 0 }}
+          title={`${name}${!isGM && isCharacterHidden ? " (hidden)" : ""}`}
+        >
           {name}
           {!isGM && isCharacterHidden && " (hidden)"}
         </Typography>
       </Stack>
-      <Stack direction="row" spacing={1} alignItems="center">
+      <Stack direction="row" spacing={1} alignItems="center" sx={{ flexShrink: 0 }}>
         <HorrorIcon />
         <Typography>{counterData.horrorLimit}</Typography>
         <DamageIcon />

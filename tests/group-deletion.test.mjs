@@ -233,6 +233,12 @@ test("confirmation cancels without deleting and accept deletes only once", async
   };
   const { GroupSettingsDialog } = await load("src/components/GroupSettingsDialog.tsx", {
     react: "export const useState = initial => globalThis.__dialogTest.useState(initial);",
+    "react-hook-form": `
+      export const useForm = () => ({
+        control: {}, handleSubmit: fn => fn, watch: () => "Group", formState: { isValid: true },
+      });
+      export const Controller = "Controller";
+    `,
     "react/jsx-runtime": `
       export const jsx = (type, props) => ({ type, props });
       export const jsxs = jsx;

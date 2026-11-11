@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useForm } from "react-hook-form";
 import {
   Button,
   Checkbox,
@@ -12,7 +13,6 @@ import {
   MenuItem,
   Select,
   Stack,
-  TextField,
 } from "@mui/material";
 import type { Character, GroupIcons, GroupNames, SceneState } from "../types";
 import {
@@ -24,6 +24,8 @@ import {
 } from "../utils/metadata";
 import { addGroupToScene } from "../utils/structuredScene";
 import { GROUP_ICONS, getAllGroups, getGroupName } from "./CharacterGroup";
+import { GroupNameField } from "./GroupNameField";
+import type { GroupNameForm } from "./GroupNameField";
 
 interface CreateGroupDialogProps {
   characters: Character[];
@@ -44,16 +46,18 @@ export function CreateGroupDialog({
   scene,
   onClose,
 }: CreateGroupDialogProps) {
-  const [name, setName] = useState("");
+  const { control, handleSubmit, formState: { isValid } } = useForm<GroupNameForm>({
+    defaultValues: { name: "" },
+    mode: "onChange",
+  });
   const [iconKey, setIconKey] = useState(Object.keys(GROUP_ICONS)[0]);
   const [memberIds, setMemberIds] = useState<string[]>([]);
 
-  const trimmedName = name.trim();
   const allGroups = getAllGroups(customGroups, scene.deletedGroups);
 
-  const handleAccept = async () => {
+  const handleAccept = async ({ name }: GroupNameForm) => {
     try {
-      await updateGroupNames({ ...groupNames, [nextGroupId]: trimmedName });
+      await updateGroupNames({ ...groupNames, [nextGroupId]: name.trim() });
       await updateGroupIcons({ ...groupIcons, [nextGroupId]: iconKey });
       await updateScene(addGroupToScene(scene, nextGroupId));
       await Promise.all(
@@ -70,13 +74,7 @@ export function CreateGroupDialog({
       <DialogTitle>Create group</DialogTitle>
       <DialogContent>
         <Stack spacing={2} sx={{ pt: 1 }}>
-          <TextField
-            label="Group name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            fullWidth
-            autoFocus
-          />
+          <GroupNameField control={control} autoFocus />
           <FormControl fullWidth>
             <InputLabel id="new-group-icon-label">Icon</InputLabel>
             <Select
@@ -137,8 +135,8 @@ export function CreateGroupDialog({
         <Button onClick={onClose}>Cancel</Button>
         <Button
           variant="contained"
-          onClick={handleAccept}
-          disabled={trimmedName === ""}
+          onClick={handleSubmit(handleAccept)}
+          disabled={!isValid}
         >
           Accept
         </Button>

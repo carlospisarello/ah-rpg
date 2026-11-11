@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useForm } from "react-hook-form";
 import {
   Alert,
   Button,
@@ -14,7 +15,6 @@ import {
   MenuItem,
   Select,
   Stack,
-  TextField,
 } from "@mui/material";
 import type { Character, GroupIcons, GroupNames } from "../types";
 import {
@@ -32,6 +32,8 @@ import {
   getGroupName,
 } from "./CharacterGroup";
 import type { CharacterGroupInfo } from "./CharacterGroup";
+import { GroupNameField } from "./GroupNameField";
+import type { GroupNameForm } from "./GroupNameField";
 
 interface GroupSettingsDialogProps {
   group: CharacterGroupInfo;
@@ -59,13 +61,16 @@ export function GroupSettingsDialog({
 
   const initialIconKey = getGroupIconKey(group, groupIcons) ?? "";
   const [iconKey, setIconKey] = useState(initialIconKey);
-  const [name, setName] = useState(initialName);
+  const { control, handleSubmit, watch, formState: { isValid } } = useForm<GroupNameForm>({
+    defaultValues: { name: initialName },
+    mode: "onChange",
+  });
   const [memberIds, setMemberIds] = useState(initialMemberIds);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  const trimmedName = name.trim();
+  const trimmedName = watch("name").trim();
   const hasNameChange = trimmedName !== initialName;
   const hasIconChange = iconKey !== initialIconKey;
   const hasMembershipChange =
@@ -73,15 +78,15 @@ export function GroupSettingsDialog({
     memberIds.some((id) => !initialMemberIds.includes(id));
   const canAccept =
     (hasNameChange || hasIconChange || hasMembershipChange) &&
-    trimmedName !== "";
+    isValid;
 
-  const handleAccept = async () => {
+  const handleAccept = async ({ name }: GroupNameForm) => {
     const addedIds = memberIds.filter((id) => !initialMemberIds.includes(id));
     const removedIds = initialMemberIds.filter((id) => !memberIds.includes(id));
 
     try {
       if (hasNameChange) {
-        await updateGroupNames({ ...groupNames, [group.id]: trimmedName });
+        await updateGroupNames({ ...groupNames, [group.id]: name.trim() });
       }
       if (hasIconChange) {
         await updateGroupIcons({ ...groupIcons, [group.id]: iconKey });
@@ -116,12 +121,7 @@ export function GroupSettingsDialog({
       <DialogTitle>Group settings</DialogTitle>
       <DialogContent>
         <Stack spacing={2} sx={{ pt: 1 }}>
-          <TextField
-            label="Group name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            fullWidth
-          />
+          <GroupNameField control={control} />
           <FormControl fullWidth>
             <InputLabel id="group-icon-label">Icon</InputLabel>
             <Select
@@ -190,7 +190,7 @@ export function GroupSettingsDialog({
         <Button onClick={onClose}>Cancel</Button>
         <Button
           variant="contained"
-          onClick={handleAccept}
+          onClick={handleSubmit(handleAccept)}
           disabled={!canAccept}
         >
           Accept
