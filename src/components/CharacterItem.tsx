@@ -211,6 +211,7 @@ export function CharacterItem({ character, gameState }: CharacterItemProps) {
         title={
           <CharacterName
             name={character.name}
+            itemText={character.itemText}
             isGM={isGM}
             counterData={counterData}
             onToggleVisibility={handleVisibility}

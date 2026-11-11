@@ -8,6 +8,7 @@ import { DamageIcon, DiceIcon, HorrorIcon } from "./CounterIcons";
 
 interface CharacterNameProps {
   name: string;
+  itemText: string;
   isGM: boolean;
   counterData: CounterData;
   isVisibilityButtonDisabled: boolean;
@@ -17,6 +18,7 @@ interface CharacterNameProps {
 
 export function CharacterName({
   name,
+  itemText,
   isGM,
   counterData,
   isVisibilityButtonDisabled,
@@ -30,7 +32,7 @@ export function CharacterName({
       alignItems="center"
       justifyContent="space-between"
     >
-      <Stack direction="row" spacing={1} alignItems="center" sx={{ minWidth: 0, flex: 1 }}>
+      <Stack direction="row" spacing={1} alignItems="flex-start" sx={{ minWidth: 0, flex: 1 }}>
         {isGM && (
           <IconButton
             size="small"
@@ -41,15 +43,29 @@ export function CharacterName({
             {counterData.visible ? <VisibleIcon /> : <InvisibleIcon />}
           </IconButton>
         )}
-        <Typography
-          variant="h6"
-          noWrap
-          sx={{ minWidth: 0 }}
-          title={`${name}${!isGM && isCharacterHidden ? " (hidden)" : ""}`}
-        >
-          {name}
-          {!isGM && isCharacterHidden && " (hidden)"}
-        </Typography>
+        <Stack direction="column">
+          {/* Text added with the Text tool in the scene (empty by default) */}
+          <Typography
+            variant="h6"
+            noWrap
+            sx={{ minWidth: 0 }}
+            title={`${itemText || name}${!isGM && isCharacterHidden ? " (hidden)" : ""}`}
+          >
+            {itemText || name}
+            {!isGM && isCharacterHidden && " (hidden)"}
+          </Typography>
+          {itemText && (
+            <Typography
+              variant="subtitle2"
+              noWrap
+              sx={{ minWidth: 0 }}
+              title={`${name}${!isGM && isCharacterHidden ? " (hidden)" : ""}`}
+            >
+              {name}
+              {!isGM && isCharacterHidden && " (hidden)"}
+            </Typography>
+          )}
+        </Stack>
       </Stack>
       <Stack direction="row" spacing={1} alignItems="center" sx={{ flexShrink: 0 }}>
         <HorrorIcon />

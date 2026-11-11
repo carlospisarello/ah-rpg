@@ -1,6 +1,7 @@
 export interface Character {
   id: string;
   name: string;
+  itemText: string;
   visible: boolean;
   metadata: Record<string, unknown>;
 }

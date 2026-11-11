@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Box, CircularProgress, Alert, Container } from "@mui/material";
-import OBR, { type Item } from "@owlbear-rodeo/sdk";
+import OBR, { isImage, type Item } from "@owlbear-rodeo/sdk";
 import { CharacterList } from "./components/CharacterList";
 import { useReassignOrphanedCharacters } from "./hooks/useReassignOrphanedCharacters";
 import { useAssignDefaultGroups } from "./hooks/useAssignDefaultGroups";
@@ -27,8 +27,16 @@ const INITIAL_GAME_STATE: GameState = {
   isGM: false,
 };
 
-const filterCharacters = (items: Item[]) =>
-  items.filter((item) => item.layer === "CHARACTER") as Character[];
+const filterCharacters = (items: Item[]): Character[] =>
+  items
+    .filter((item) => item.layer === "CHARACTER")
+    .map((item) => ({
+      id: item.id,
+      name: item.name,
+      itemText: isImage(item) ? item.text.plainText : "",
+      visible: item.visible,
+      metadata: item.metadata,
+    }));
 
 async function loadGameState(): Promise<GameState> {
   const id = await OBR.player.getId();
