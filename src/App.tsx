@@ -34,6 +34,7 @@ const filterCharacters = (items: Item[]): Character[] =>
       id: item.id,
       name: item.name,
       itemText: isImage(item) ? item.text.plainText : "",
+      imageUrl: isImage(item) ? item.image.url : "",
       visible: item.visible,
       metadata: item.metadata,
     }));

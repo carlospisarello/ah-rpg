@@ -13,6 +13,7 @@ import {
   Fab,
   Box,
 } from "@mui/material";
+import OBR from "@owlbear-rodeo/sdk";
 import { DiceIcon as DiceIconNative } from "./icons/Dice";
 import CloseIcon from "@mui/icons-material/Close";
 import { ResetIcon } from "./icons/Reset";
@@ -183,6 +184,28 @@ export function CharacterItem({ character, gameState }: CharacterItemProps) {
     await applyUpdates({ visible, wasVisible: visible });
   };
 
+  const handleCenterOnCharacter = async () => {
+    try {
+      const [bounds, scale, width, height] = await Promise.all([
+        OBR.scene.items.getItemBounds([character.id]),
+        OBR.viewport.getScale(),
+        OBR.viewport.getWidth(),
+        OBR.viewport.getHeight(),
+      ]);
+      await OBR.player.select([character.id], true);
+      // The viewport position is the screen offset of the scene origin
+      await OBR.viewport.animateTo({
+        position: {
+          x: width / 2 - bounds.center.x * scale,
+          y: height / 2 - bounds.center.y * scale,
+        },
+        scale,
+      });
+    } catch (error) {
+      console.error("Failed to center the character in the viewport:", error);
+    }
+  };
+
   // Damaged dice are counted from the right
   const isDamagedDie = (index: number) =>
     index >= counterData.limit - counterData.damage;
@@ -212,6 +235,7 @@ export function CharacterItem({ character, gameState }: CharacterItemProps) {
           <CharacterName
             name={character.name}
             itemText={character.itemText}
+            imageUrl={character.imageUrl}
             isGM={isGM}
             counterData={counterData}
             onToggleVisibility={handleVisibility}
@@ -220,6 +244,7 @@ export function CharacterItem({ character, gameState }: CharacterItemProps) {
               !character.visible && !counterData.visible
             }
             isCharacterHidden={!character.visible || !counterData.visible}
+            onCenterOnCharacter={handleCenterOnCharacter}
           />
         }
       />

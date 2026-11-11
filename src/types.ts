@@ -2,6 +2,7 @@ export interface Character {
   id: string;
   name: string;
   itemText: string;
+  imageUrl: string;
   visible: boolean;
   metadata: Record<string, unknown>;
 }
