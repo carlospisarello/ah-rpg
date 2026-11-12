@@ -22,6 +22,7 @@ import {
   getGroup,
   isCharacterVisible,
   refillDice,
+  updateCounterData,
   updateScene,
 } from "../utils/metadata";
 import {
@@ -43,9 +44,15 @@ interface CharacterListProps {
 export function CharacterList({ gameState }: CharacterListProps) {
   const [editingGroupId, setEditingGroupId] = useState<number | null>(null);
   const [draggedGroupId, setDraggedGroupId] = useState<number | null>(null);
+  const [draggedCharacterId, setDraggedCharacterId] = useState<string | null>(
+    null,
+  );
+  const [characterDropGroupId, setCharacterDropGroupId] = useState<number | null>(
+    null,
+  );
   const [dropTarget, setDropTarget] = useState<{
     zone: DropZone;
-    groupId: number | null;
+    position: number;
   } | null>(null);
   const [isStartingScene, setIsStartingScene] = useState(false);
   const [isCreatingGroup, setIsCreatingGroup] = useState(false);
@@ -117,17 +124,42 @@ export function CharacterList({ gameState }: CharacterListProps) {
     }
   };
 
-  const handleGroupDrop = (zone: DropZone, targetId: number | null) => {
+  const isUnchangedPosition = (zone: DropZone, position: number) => {
+    const groups = zone === "round" ? scene.roundGroups : scene.groupOrder;
+    const oldIndex =
+      draggedGroupId === null ? -1 : groups.indexOf(draggedGroupId);
+    return (
+      oldIndex !== -1 && (position === oldIndex || position === oldIndex + 1)
+    );
+  };
+
+  const handleGroupDrop = (zone: DropZone, position: number) => {
     const movedId = draggedGroupId;
+    const unchanged = isUnchangedPosition(zone, position);
     clearDrag();
-    if (movedId === null || movedId === targetId) return;
-    return applyChange(moveGroupInScene(scene, movedId, zone, targetId));
+    if (movedId === null || unchanged) return;
+    return applyChange(moveGroupInScene(scene, movedId, zone, position));
   };
 
   function clearDrag() {
     setDraggedGroupId(null);
+    setDraggedCharacterId(null);
     setDropTarget(null);
+    setCharacterDropGroupId(null);
   }
+
+  const handleCharacterDrop = async (groupId: number) => {
+    const character = gameState.characters.find(
+      (item) => item.id === draggedCharacterId,
+    );
+    clearDrag();
+    if (!character || getGroup(character) === groupId) return;
+    try {
+      await updateCounterData(character.id, { group: groupId });
+    } catch (error) {
+      console.error("Failed to move the character to the group:", error);
+    }
+  };
 
   const activeGroup =
     scene.active && scene.turnGroup !== null
@@ -140,7 +172,11 @@ export function CharacterList({ gameState }: CharacterListProps) {
       (character) => getGroup(character) === group.id,
     );
     // The unassigned group is only shown to the GM
-    if (isUnassigned && (!gameState.isGM || groupCharacters.length === 0))
+    if (
+      isUnassigned &&
+      (!gameState.isGM ||
+        (groupCharacters.length === 0 && draggedCharacterId === null))
+    )
       return null;
     // The GM also sees empty groups, so that they can be filled
     if (groupCharacters.length === 0 && !gameState.isGM) return null;
@@ -163,6 +199,31 @@ export function CharacterList({ gameState }: CharacterListProps) {
         hiddenCount={hiddenCount}
         Icon={getGroupIcon(group, gameState.groupIcons)}
         isActive={activeGroup?.id === group.id}
+        characterDrop={
+          gameState.isGM && draggedCharacterId !== null
+            ? {
+                isTarget: characterDropGroupId === group.id,
+                onDragOver: (e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setCharacterDropGroupId(group.id);
+                },
+                onDragLeave: (e) => {
+                  if (
+                    !(e.relatedTarget instanceof Node) ||
+                    !e.currentTarget.contains(e.relatedTarget)
+                  ) {
+                    setCharacterDropGroupId(null);
+                  }
+                },
+                onDrop: (e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  void handleCharacterDrop(group.id);
+                },
+              }
+            : undefined
+        }
         onSettings={
           gameState.isGM && !isUnassigned
             ? () => setEditingGroupId(group.id)
@@ -172,12 +233,7 @@ export function CharacterList({ gameState }: CharacterListProps) {
           isManageable
             ? {
                 isDragging: draggedGroupId === group.id,
-                isDropTarget:
-                  dropTarget?.groupId === group.id &&
-                  draggedGroupId !== group.id,
                 onDragStart: () => setDraggedGroupId(group.id),
-                onDragOver: () => setDropTarget({ zone, groupId: group.id }),
-                onDrop: () => handleGroupDrop(zone, group.id),
                 onDragEnd: clearDrag,
               }
             : undefined
@@ -189,6 +245,15 @@ export function CharacterList({ gameState }: CharacterListProps) {
               key={character.id}
               character={character}
               gameState={gameState}
+              drag={
+                gameState.isGM
+                  ? {
+                      isDragging: draggedCharacterId === character.id,
+                      onDragStart: () => setDraggedCharacterId(character.id),
+                      onDragEnd: clearDrag,
+                    }
+                  : undefined
+              }
             />
           ))
         ) : (
@@ -200,46 +265,105 @@ export function CharacterList({ gameState }: CharacterListProps) {
     );
   };
 
-  // The zones accept groups dropped on empty space.
+  const getDropPosition = (e: DragEvent<HTMLElement>, zone: DropZone) => {
+    const groups =
+      e.currentTarget.querySelectorAll<HTMLElement>("[data-drop-group]");
+    const maxPosition =
+      zone === "round" ? scene.roundGroups.length : scene.groupOrder.length;
+    for (let index = 0; index < groups.length; index++) {
+      if (index >= maxPosition) return maxPosition;
+      const bounds = groups[index].getBoundingClientRect();
+      if (e.clientY < bounds.top + bounds.height / 2) return index;
+    }
+    return maxPosition;
+  };
+
   const zoneProps = (zone: DropZone) =>
-    gameState.isGM
+    gameState.isGM && draggedGroupId !== null
       ? {
           onDragOver: (e: DragEvent<HTMLElement>) => {
             e.preventDefault();
             e.stopPropagation();
-            setDropTarget({ zone, groupId: null });
+            setDropTarget({ zone, position: getDropPosition(e, zone) });
           },
           onDrop: (e: DragEvent<HTMLElement>) => {
             e.preventDefault();
             e.stopPropagation();
-            handleGroupDrop(zone, null);
+            handleGroupDrop(zone, getDropPosition(e, zone));
           },
         }
       : {};
   const backgroundProps =
-    gameState.isGM &&
-    draggedGroupId !== null &&
-    scene.roundGroups.includes(draggedGroupId)
+    gameState.isGM && draggedGroupId !== null
       ? {
           onDragOver: (e: DragEvent<HTMLElement>) => {
-            if (e.target !== e.currentTarget) return;
-            e.preventDefault();
-            setDropTarget({ zone: "outside", groupId: null });
+            if (
+              e.target === e.currentTarget &&
+              scene.roundGroups.includes(draggedGroupId)
+            ) {
+              e.preventDefault();
+              e.stopPropagation();
+              setDropTarget({ zone: "outside", position: 0 });
+            } else {
+              setDropTarget(null);
+            }
           },
           onDrop: (e: DragEvent<HTMLElement>) => {
-            if (e.target !== e.currentTarget) return;
+            if (
+              e.target !== e.currentTarget ||
+              !scene.roundGroups.includes(draggedGroupId)
+            )
+              return;
             e.preventDefault();
-            handleGroupDrop("outside", null);
+            e.stopPropagation();
+            handleGroupDrop("outside", 0);
           },
         }
       : {};
   const isZoneTarget = (zone: DropZone) =>
-    draggedGroupId !== null &&
-    dropTarget?.zone === zone &&
-    dropTarget.groupId === null;
+    draggedGroupId !== null && dropTarget?.zone === zone;
+  const showLine = (zone: DropZone, position: number) =>
+    isZoneTarget(zone) &&
+    dropTarget?.position === position &&
+    !isUnchangedPosition(zone, position);
+  const line = (
+    <Box sx={{ px: "8px", py: "8px", pointerEvents: "none" }}>
+      <Box sx={{ height: "2px", backgroundColor: "white" }} />
+    </Box>
+  );
+  const renderDropGroups = (zone: DropZone) => {
+    const ids = zone === "round" ? scene.roundGroups : scene.groupOrder;
+    const groups = ids.map((id) => renderGroup(groupById(id), zone));
+    if (zone === "outside") groups.push(renderGroup(UNASSIGNED_GROUP, null));
+    const visibleGroups = groups.filter((group) => group !== null);
+    if (visibleGroups.length === 0) {
+      return showLine(zone, 0) ? line : null;
+    }
+    return visibleGroups.map((group, index) => (
+      <Box key={group.key}>
+        {showLine(zone, index) && line}
+        <Box data-drop-group>{group}</Box>
+        {index === visibleGroups.length - 1 &&
+          showLine(zone, ids.length) &&
+          index < ids.length &&
+          line}
+      </Box>
+    ));
+  };
 
   return (
-    <Box {...backgroundProps} sx={{ minHeight: "100vh" }}>
+    <Box
+      {...backgroundProps}
+      onDragLeave={(e) => {
+        if (
+          !(e.relatedTarget instanceof Node) ||
+          !e.currentTarget.contains(e.relatedTarget)
+        ) {
+          setDropTarget(null);
+        }
+      }}
+      sx={{ minHeight: "100vh" }}
+    >
       <Container {...backgroundProps} sx={{ minHeight: "100vh" }}>
         <Stack
           {...backgroundProps}
@@ -301,9 +425,7 @@ export function CharacterList({ gameState }: CharacterListProps) {
                 </Typography>
               )}
               <Stack spacing={2}>
-                {scene.roundGroups.map((id) =>
-                  renderGroup(groupById(id), "round"),
-                )}
+                {renderDropGroups("round")}
               </Stack>
             </Stack>
           )}
@@ -312,10 +434,7 @@ export function CharacterList({ gameState }: CharacterListProps) {
             {...zoneProps("outside")}
             sx={{ outline: isZoneTarget("outside") ? "2px dashed" : "none" }}
           >
-            {scene.groupOrder.map((id) =>
-              renderGroup(groupById(id), "outside"),
-            )}
-            {renderGroup(UNASSIGNED_GROUP, null)}
+            {renderDropGroups("outside")}
           </Stack>
           {gameState.isGM && (
             <Button

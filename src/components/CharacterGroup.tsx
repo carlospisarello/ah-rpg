@@ -1,5 +1,5 @@
 import type { DropZone } from "../utils/structuredScene";
-import type { ReactNode } from "react";
+import type { DragEvent, ReactNode } from "react";
 import {
   Accordion,
   AccordionDetails,
@@ -111,10 +111,7 @@ export const getGroupName = (
 
 export interface GroupReorderProps {
   isDragging: boolean;
-  isDropTarget: boolean;
   onDragStart: () => void;
-  onDragOver: () => void;
-  onDrop: () => void;
   onDragEnd: () => void;
 }
 
@@ -133,6 +130,12 @@ interface CharacterGroupProps {
   isActive?: boolean;
   /** Only the GM can change the order of the groups */
   reorder?: GroupReorderProps;
+  characterDrop?: {
+    isTarget: boolean;
+    onDragOver: (event: DragEvent<HTMLElement>) => void;
+    onDragLeave: (event: DragEvent<HTMLElement>) => void;
+    onDrop: (event: DragEvent<HTMLElement>) => void;
+  };
   children: ReactNode;
   zone?: DropZone | null;
 }
@@ -145,39 +148,28 @@ export function CharacterGroup({
   onSettings,
   isActive,
   reorder,
+  characterDrop,
   children,
   zone,
 }: CharacterGroupProps) {
   return (
-    <Box> 
+    <Box>
       <Accordion
         defaultExpanded
         disableGutters={zone !== "round" && zone !== null}
         sx={{
           border: 2,
-          borderColor: isActive ? "primary.main" : "transparent",
+          borderStyle: characterDrop?.isTarget ? "dashed" : "solid",
+          borderColor: isActive
+            ? "primary.main"
+            : characterDrop?.isTarget
+              ? "white"
+              : "transparent",
           opacity: reorder?.isDragging ? 0.5 : 1,
-          outline: reorder?.isDropTarget ? "2px dashed" : "none",
         }}
-        onDragOver={
-          reorder
-            ? (e) => {
-                // Allows the drop, otherwise the browser doesn't fire it
-                e.preventDefault();
-                // The zone holding the group has its own drop handlers
-                e.stopPropagation();
-                reorder.onDragOver();
-              }
-            : undefined
-        }
-        onDrop={
-          reorder
-            ? (e) => {
-                e.stopPropagation();
-                reorder.onDrop();
-              }
-            : undefined
-        }
+        onDragOver={characterDrop?.onDragOver}
+        onDragLeave={characterDrop?.onDragLeave}
+        onDrop={characterDrop?.onDrop}
       >
         <AccordionSummary
           expandIcon={<ExpandMoreIcon />}

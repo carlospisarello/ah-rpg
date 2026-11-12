@@ -6,8 +6,21 @@ Group creation and settings use React Hook Form for validation. Group names are
 required, trimmed before saving, and limited to 20 characters. Existing names
 over the limit must be shortened before group settings can be saved.
 
-During a structured scene, the GM can drag a group from the round counter onto
-empty background space to place it at the top of the groups outside the counter.
+The GM can drag groups to reorder them or move them between the round counter
+and the groups outside it. A white line shows the insertion position, and a
+dashed outline marks the destination container. The line has 8px of padding on
+every side, including when the container already has groups. Dropping on a
+group's upper or lower half inserts before or after it; dropping on Unassigned
+inserts before it.
+Dropping on the round counter header inserts at the beginning of the round.
+Dropping a round group on the background outside the groups inserts it at the
+beginning of the outside list.
+
+The GM can also drag a character onto a group, including an empty or collapsed
+group, to change its membership. The destination group has a dashed border,
+green for the active group. Character order does not change, and dropping on the
+background is not supported. The empty Unassigned group is shown while dragging
+so it can be selected as a destination.
 
 Currently, two official plugins are available:
 

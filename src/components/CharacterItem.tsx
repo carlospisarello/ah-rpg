@@ -18,6 +18,7 @@ import {
 import OBR from "@owlbear-rodeo/sdk";
 import { DiceIcon as DiceIconNative } from "./icons/Dice";
 import CloseIcon from "@mui/icons-material/Close";
+import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import { ExpandMore } from "@mui/icons-material";
 import type { Character, CounterData, GameState, Player } from "../types";
 import {
@@ -38,6 +39,11 @@ import type { CharacterGroupInfo } from "./CharacterGroup";
 interface CharacterItemProps {
   character: Character;
   gameState: GameState;
+  drag?: {
+    isDragging: boolean;
+    onDragStart: () => void;
+    onDragEnd: () => void;
+  };
 }
 
 const FAB_SX = { width: 25, height: 25, minHeight: 25 };
@@ -54,7 +60,11 @@ function getAssigneeLabel(
   return players.find((p) => p.id === assigneeId)?.name || "Unknown";
 }
 
-export function CharacterItem({ character, gameState }: CharacterItemProps) {
+export function CharacterItem({
+  character,
+  gameState,
+  drag,
+}: CharacterItemProps) {
   const [counterData, setCounterData] = useState<CounterData | null>(null);
 
   const { isGM, players } = gameState;
@@ -231,23 +241,49 @@ export function CharacterItem({ character, gameState }: CharacterItemProps) {
 
   return (
     <div>
-      <Accordion variant="outlined">
-        <AccordionSummary expandIcon={<ExpandMore />}>
-        {/* el handler del drag and drop va acá */}
-          <CharacterName
-            name={character.name}
-            itemText={character.itemText}
-            imageUrl={character.imageUrl}
-            isGM={isGM}
-            counterData={counterData}
-            onToggleVisibility={handleVisibility}
-            // Disabled if both the counter and the item are invisible
-            isVisibilityButtonDisabled={
-              !character.visible && !counterData.visible
-            }
-            isCharacterHidden={!character.visible || !counterData.visible}
-            onCenterOnCharacter={handleCenterOnCharacter}
-          />
+      <Accordion
+        variant="outlined"
+        sx={{ opacity: drag?.isDragging ? 0.5 : 1 }}
+      >
+        <AccordionSummary
+          expandIcon={<ExpandMore />}
+          draggable={!!drag}
+          onDragStart={
+            drag
+              ? (e) => {
+                  e.stopPropagation();
+                  e.dataTransfer.setData("text/plain", character.name);
+                  e.dataTransfer.effectAllowed = "move";
+                  drag.onDragStart();
+                }
+              : undefined
+          }
+          onDragEnd={
+            drag
+              ? (e) => {
+                  e.stopPropagation();
+                  drag.onDragEnd();
+                }
+              : undefined
+          }
+        >
+          <Stack direction="row" spacing={1} alignItems="center">
+            {drag && <DragIndicatorIcon sx={{ cursor: "grab" }} />}
+            <CharacterName
+              name={character.name}
+              itemText={character.itemText}
+              imageUrl={character.imageUrl}
+              isGM={isGM}
+              counterData={counterData}
+              onToggleVisibility={handleVisibility}
+              // Disabled if both the counter and the item are invisible
+              isVisibilityButtonDisabled={
+                !character.visible && !counterData.visible
+              }
+              isCharacterHidden={!character.visible || !counterData.visible}
+              onCenterOnCharacter={handleCenterOnCharacter}
+            />
+          </Stack>
         </AccordionSummary>
         <AccordionDetails>
           <Stack spacing={2} justifyContent="center">
