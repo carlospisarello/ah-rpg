@@ -128,7 +128,8 @@ export function previousTurn(scene: SceneState): SceneChange {
 export type DropZone = "round" | "outside";
 
 /**
- * Moves a group to the place of `targetId` in a zone, or to the end of the zone without a target.
+ * Moves a group to the place of `targetId` in a zone. Without a target, a
+ * group leaving the round goes first; other moves go to the end of the zone.
  * Groups entering the round counter get their dice refilled.
  */
 export function moveGroupInScene(
@@ -143,13 +144,13 @@ export function moveGroupInScene(
   const original = zone === "round" ? current.roundGroups : current.groupOrder;
   const destination = withoutMoved(original);
   const targetIndex = targetId === null ? -1 : original.indexOf(targetId);
-  destination.splice(
-    targetIndex === -1
-      ? destination.length
-      : Math.min(targetIndex, destination.length),
-    0,
-    movedId,
-  );
+  const insertIndex =
+    targetIndex !== -1
+      ? Math.min(targetIndex, destination.length)
+      : zone === "outside" && wasInRound && targetId === null
+        ? 0
+        : destination.length;
+  destination.splice(insertIndex, 0, movedId);
 
   const roundGroups =
     zone === "round" ? destination : withoutMoved(current.roundGroups);

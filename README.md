@@ -6,6 +6,9 @@ Group creation and settings use React Hook Form for validation. Group names are
 required, trimmed before saving, and limited to 20 characters. Existing names
 over the limit must be shortened before group settings can be saved.
 
+During a structured scene, the GM can drag a group from the round counter onto
+empty background space to place it at the top of the groups outside the counter.
+
 Currently, two official plugins are available:
 
 - [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)

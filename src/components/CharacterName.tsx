@@ -39,9 +39,7 @@ export function CharacterName({
         "& .avatar-image": {
           transition: "filter 0.15s",
           // Hidden characters are shown in greyscale and darkened
-          filter: isCharacterHidden
-            ? "grayscale(1) brightness(0.5)"
-            : "none",
+          filter: isCharacterHidden ? "grayscale(1) brightness(0.5)" : "none",
         },
       }}
     />
@@ -53,8 +51,16 @@ export function CharacterName({
       spacing={2}
       alignItems="center"
       justifyContent="space-between"
+      sx={{ width: "100%" }}
+      mr={2}
     >
-      <Stack direction="row" spacing={1} alignItems="center" gap={1} sx={{ minWidth: 0, flex: 1 }}>
+      <Stack
+        direction="row"
+        spacing={1}
+        alignItems="center"
+        gap={1}
+        sx={{ minWidth: 0, flex: 1 }}
+      >
         {isGM ? (
           <ButtonBase
             onClick={onToggleVisibility}
@@ -121,7 +127,7 @@ export function CharacterName({
           </Typography>
           {itemText && (
             <Typography
-              variant="subtitle2"
+              variant="caption"
               noWrap
               sx={{ minWidth: 0 }}
               title={`${name}${!isGM && isCharacterHidden ? " (hidden)" : ""}`}
@@ -132,7 +138,12 @@ export function CharacterName({
           )}
         </Stack>
       </Stack>
-      <Stack direction="row" spacing={1} alignItems="center" sx={{ flexShrink: 0 }}>
+      <Stack
+        direction="row"
+        spacing={1}
+        alignItems="center"
+        sx={{ flexShrink: 0 }}
+      >
         <HorrorIcon />
         <Typography>{counterData.horrorLimit}</Typography>
         <DamageIcon />

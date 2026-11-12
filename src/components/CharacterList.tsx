@@ -139,7 +139,7 @@ export function CharacterList({ gameState }: CharacterListProps) {
     const groupCharacters = sortedCharacters.filter(
       (character) => getGroup(character) === group.id,
     );
-    // The unassigned group is only shown to the GM, and only when it has characters
+    // The unassigned group is only shown to the GM
     if (isUnassigned && (!gameState.isGM || groupCharacters.length === 0))
       return null;
     // The GM also sees empty groups, so that they can be filled
@@ -200,15 +200,37 @@ export function CharacterList({ gameState }: CharacterListProps) {
     );
   };
 
-  // The zones accept groups dropped on empty space, which sends them to the end
+  // The zones accept groups dropped on empty space.
   const zoneProps = (zone: DropZone) =>
     gameState.isGM
       ? {
           onDragOver: (e: DragEvent<HTMLElement>) => {
             e.preventDefault();
+            e.stopPropagation();
             setDropTarget({ zone, groupId: null });
           },
-          onDrop: () => handleGroupDrop(zone, null),
+          onDrop: (e: DragEvent<HTMLElement>) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleGroupDrop(zone, null);
+          },
+        }
+      : {};
+  const backgroundProps =
+    gameState.isGM &&
+    draggedGroupId !== null &&
+    scene.roundGroups.includes(draggedGroupId)
+      ? {
+          onDragOver: (e: DragEvent<HTMLElement>) => {
+            if (e.target !== e.currentTarget) return;
+            e.preventDefault();
+            setDropTarget({ zone: "outside", groupId: null });
+          },
+          onDrop: (e: DragEvent<HTMLElement>) => {
+            if (e.target !== e.currentTarget) return;
+            e.preventDefault();
+            handleGroupDrop("outside", null);
+          },
         }
       : {};
   const isZoneTarget = (zone: DropZone) =>
@@ -217,116 +239,134 @@ export function CharacterList({ gameState }: CharacterListProps) {
     dropTarget.groupId === null;
 
   return (
-    <Container>
-      <Stack spacing={2} py={2}>
-        {!scene.active && gameState.isGM && (
-          <Button
-            fullWidth
-            variant="contained"
-            sx={{ mb: 2 }}
-            onClick={() => setIsStartingScene(true)}
-          >
-            Start structured scene
-          </Button>
-        )}
-        {scene.active && (
-          <Stack
-            {...zoneProps("round")}
-            sx={{
-              p: 2,
-              border: 1,
-              borderColor: "divider",
-              borderRadius: 1,
-              outline: isZoneTarget("round") ? "2px dashed" : "none",
-            }}
-          >
-            <RoundCounter
-              round={scene.round}
-              activeGroup={
-                activeGroup &&
-                (() => {
-                  const Icon = getGroupIcon(activeGroup, gameState.groupIcons);
-                  return {
-                    name: getGroupName(activeGroup, gameState.groupNames),
-                    icon: Icon && <Icon />,
-                  };
-                })()
-              }
-              controls={
-                gameState.isGM
-                  ? {
-                      canGoPrevious: canGoPrevious(scene),
-                      onPrevious: () => applyChange(previousTurn(scene)),
-                      onNext: () => applyChange(nextTurn(scene)),
-                      onReset: () => applyChange(resetRounds(scene)),
-                      onEnd: () => applyChange(endScene(scene)),
-                    }
-                  : undefined
-              }
-            />
-            {scene.roundGroups.length === 0 && gameState.isGM && (
-              <Typography color="textSecondary" sx={{ mb: 2 }}>
-                Drag groups here to add them to the round
-              </Typography>
-            )}
-            <Stack spacing={2}>
-              {scene.roundGroups.map((id) => renderGroup(groupById(id), "round"))}
-            </Stack>
-          </Stack>
-        )}
-        <Stack spacing={2} 
-          {...zoneProps("outside")}
-          sx={{ outline: isZoneTarget("outside") ? "2px dashed" : "none" }}
+    <Box {...backgroundProps} sx={{ minHeight: "100vh" }}>
+      <Container {...backgroundProps} sx={{ minHeight: "100vh" }}>
+        <Stack
+          {...backgroundProps}
+          spacing={2}
+          py={2}
+          sx={{ minHeight: "100vh" }}
         >
-          {scene.groupOrder.map((id) => renderGroup(groupById(id), "outside"))}
-          {renderGroup(UNASSIGNED_GROUP, null)}
-        </Stack>
-        {gameState.isGM && (
-          <Button
-            fullWidth
-            variant="outlined"
-            onClick={() => setIsCreatingGroup(true)}
+          {!scene.active && gameState.isGM && (
+            <Button
+              fullWidth
+              variant="contained"
+              sx={{ mb: 2 }}
+              onClick={() => setIsStartingScene(true)}
+            >
+              Start structured scene
+            </Button>
+          )}
+          {scene.active && (
+            <Stack
+              {...zoneProps("round")}
+              sx={{
+                p: 2,
+                border: 1,
+                borderColor: "divider",
+                borderRadius: 1,
+                outline: isZoneTarget("round") ? "2px dashed" : "none",
+              }}
+            >
+              <RoundCounter
+                round={scene.round}
+                activeGroup={
+                  activeGroup &&
+                  (() => {
+                    const Icon = getGroupIcon(
+                      activeGroup,
+                      gameState.groupIcons,
+                    );
+                    return {
+                      name: getGroupName(activeGroup, gameState.groupNames),
+                      icon: Icon && <Icon />,
+                    };
+                  })()
+                }
+                controls={
+                  gameState.isGM
+                    ? {
+                        canGoPrevious: canGoPrevious(scene),
+                        onPrevious: () => applyChange(previousTurn(scene)),
+                        onNext: () => applyChange(nextTurn(scene)),
+                        onReset: () => applyChange(resetRounds(scene)),
+                        onEnd: () => applyChange(endScene(scene)),
+                      }
+                    : undefined
+                }
+              />
+              {scene.roundGroups.length === 0 && gameState.isGM && (
+                <Typography color="textSecondary" sx={{ mb: 2 }}>
+                  Drag groups here to add them to the round
+                </Typography>
+              )}
+              <Stack spacing={2}>
+                {scene.roundGroups.map((id) =>
+                  renderGroup(groupById(id), "round"),
+                )}
+              </Stack>
+            </Stack>
+          )}
+          <Stack
+            spacing={2}
+            {...zoneProps("outside")}
+            sx={{ outline: isZoneTarget("outside") ? "2px dashed" : "none" }}
           >
-            Create group
-          </Button>
+            {scene.groupOrder.map((id) =>
+              renderGroup(groupById(id), "outside"),
+            )}
+            {renderGroup(UNASSIGNED_GROUP, null)}
+          </Stack>
+          {gameState.isGM && (
+            <Button
+              fullWidth
+              variant="outlined"
+              onClick={() => setIsCreatingGroup(true)}
+            >
+              Create group
+            </Button>
+          )}
+        </Stack>
+        {isCreatingGroup && (
+          <CreateGroupDialog
+            characters={gameState.characters}
+            groupNames={gameState.groupNames}
+            groupIcons={gameState.groupIcons}
+            customGroups={scene.customGroups}
+            nextGroupId={getNextGroupId(
+              scene.customGroups,
+              scene.deletedGroups,
+            )}
+            scene={scene}
+            onClose={() => setIsCreatingGroup(false)}
+          />
         )}
-      </Stack>
-      {isCreatingGroup && (
-        <CreateGroupDialog
-          characters={gameState.characters}
-          groupNames={gameState.groupNames}
-          groupIcons={gameState.groupIcons}
-          customGroups={scene.customGroups}
-          nextGroupId={getNextGroupId(scene.customGroups, scene.deletedGroups)}
-          scene={scene}
-          onClose={() => setIsCreatingGroup(false)}
-        />
-      )}
-      {isStartingScene && (
-        <StructuredSceneDialog
-          characters={gameState.characters}
-          groupNames={gameState.groupNames}
-          groupIcons={gameState.groupIcons}
-          customGroups={scene.customGroups}
-          deletedGroups={scene.deletedGroups}
-          onCancel={() => setIsStartingScene(false)}
-          onAccept={(selectedIds) => {
-            setIsStartingScene(false);
-            applyChange(startScene(scene, selectedIds));
-          }}
-        />
-      )}
-      {editingGroup && (
-        <GroupSettingsDialog
-          group={editingGroup}
-          characters={gameState.characters}
-          groupNames={gameState.groupNames}
-          groupIcons={gameState.groupIcons}
-          customGroups={scene.customGroups}
-          deletedGroups={scene.deletedGroups}
-          onClose={() => setEditingGroupId(null)}
-        />
-      )}
-    </Container>
+        {isStartingScene && (
+          <StructuredSceneDialog
+            characters={gameState.characters}
+            groupNames={gameState.groupNames}
+            groupIcons={gameState.groupIcons}
+            customGroups={scene.customGroups}
+            deletedGroups={scene.deletedGroups}
+            onCancel={() => setIsStartingScene(false)}
+            onAccept={(selectedIds) => {
+              setIsStartingScene(false);
+              applyChange(startScene(scene, selectedIds));
+            }}
+          />
+        )}
+        {editingGroup && (
+          <GroupSettingsDialog
+            group={editingGroup}
+            characters={gameState.characters}
+            groupNames={gameState.groupNames}
+            groupIcons={gameState.groupIcons}
+            customGroups={scene.customGroups}
+            deletedGroups={scene.deletedGroups}
+            onClose={() => setEditingGroupId(null)}
+          />
+        )}
+      </Container>
+    </Box>
   );
 }

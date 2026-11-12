@@ -1,5 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import {
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
   Card,
   CardContent,
   CardHeader,
@@ -11,12 +14,11 @@ import {
   ButtonGroup,
   Stack,
   Fab,
-  Box,
 } from "@mui/material";
 import OBR from "@owlbear-rodeo/sdk";
 import { DiceIcon as DiceIconNative } from "./icons/Dice";
 import CloseIcon from "@mui/icons-material/Close";
-import { ResetIcon } from "./icons/Reset";
+import { ExpandMore } from "@mui/icons-material";
 import type { Character, CounterData, GameState, Player } from "../types";
 import {
   GM_ASSIGNEE,
@@ -214,7 +216,9 @@ export function CharacterItem({ character, gameState }: CharacterItemProps) {
   const isHorrorDie = (index: number) => index < counterData.horrorLimit;
 
   const firstRowSize =
-    counterData.limit >= 7 ? Math.ceil(counterData.limit / 2) : counterData.limit;
+    counterData.limit >= 7
+      ? Math.ceil(counterData.limit / 2)
+      : counterData.limit;
   const diceRows =
     counterData.limit >= 7
       ? [firstRowSize, counterData.limit - firstRowSize]
@@ -226,12 +230,10 @@ export function CharacterItem({ character, gameState }: CharacterItemProps) {
   };
 
   return (
-    <Card
-      variant="outlined"
-    >
-      <CardHeader
-        sx={{ paddingBottom: 0, "& .MuiCardHeader-content": { minWidth: 0 } }}
-        title={
+    <div>
+      <Accordion variant="outlined">
+        <AccordionSummary expandIcon={<ExpandMore />}>
+        {/* el handler del drag and drop va acá */}
           <CharacterName
             name={character.name}
             itemText={character.itemText}
@@ -246,176 +248,174 @@ export function CharacterItem({ character, gameState }: CharacterItemProps) {
             isCharacterHidden={!character.visible || !counterData.visible}
             onCenterOnCharacter={handleCenterOnCharacter}
           />
-        }
-      />
-      <CardContent
-        sx={(theme) => ({ paddingBottom: `${theme.spacing(2)} !important` })}
-      >
-        <Stack spacing={2} justifyContent="center">
-          {/* Control Buttons */}
-          {canInteract && (
-            <Stack direction="row" gap={1} alignItems="center" flexWrap={"wrap"}>
-              <Stack direction="row" spacing={1} flexGrow={1}>
-                <IconButton
-                  color="secondary"
-                  onClick={handleHorrorLimitReset}
-                >
-                <HorrorIcon />
-                </IconButton>
-                <ButtonGroup
-                  size="small"
-                  variant="contained"
-                  fullWidth
-                  color="secondary"
-                >
-                  <Button
-                    disabled={counterData.horrorLimit === 0}
-                    onClick={handleHorrorLimitDecrement}
-                  >
-                    −
-                  </Button>
-                  <Button
-                    disabled={counterData.horrorLimit >= counterData.limit}
-                    onClick={handleHorrorLimitIncrement}
-                  >
-                    +
-                  </Button>
-                  {/* <Button
-                    disabled={counterData.horrorLimit === 0}
+        </AccordionSummary>
+        <AccordionDetails>
+          <Stack spacing={2} justifyContent="center">
+            {/* Control Buttons */}
+            {canInteract && (
+              <Stack
+                direction="row"
+                gap={1}
+                alignItems="center"
+                flexWrap={"wrap"}
+              >
+                <Stack direction="row" spacing={1} flexGrow={1}>
+                  <IconButton
+                    color="secondary"
                     onClick={handleHorrorLimitReset}
                   >
-                    <ResetIcon />
-                  </Button> */}
-                </ButtonGroup>
-              </Stack>
-              <Stack direction="row" spacing={1} flexGrow={1}>
-                <IconButton
-                  color="error"
-                  onClick={handleDamageReset}
-                >
-                  <DamageIcon />
-                </IconButton>
-                <ButtonGroup
-                  size="small"
-                  variant="contained"
-                  fullWidth
-                  color="error"
-                >
-                  <Button
-                    disabled={counterData.damage === 0}
-                    onClick={handleDamageDecrement}
+                    <HorrorIcon />
+                  </IconButton>
+                  <ButtonGroup
+                    size="small"
+                    variant="contained"
+                    fullWidth
+                    color="secondary"
                   >
-                    −
-                  </Button>
-                  <Button
-                    disabled={counterData.damage >= counterData.limit}
-                    onClick={handleDamageIncrement}
-                  >
-                    +
-                  </Button>
-                </ButtonGroup>
-              </Stack>
-              <Stack direction="row" spacing={1} flexGrow={1}>
-                <IconButton
-                  onClick={handleUsedReset}
-                  color="primary"
-                  disabled={counterData.used.length === 0}
-                >
-                  <DiceIcon />
-                </IconButton>
-                <ButtonGroup
-                  size="small"
-                  variant="contained"
-                  fullWidth
-                  color="primary"
-                >
-                  <Button
-                    onClick={handleLimitDecrement}
-                    disabled={counterData.limit <= 1}
-                  >
-                    −
-                  </Button>
-                  <Button onClick={handleLimitIncrement}>+</Button>
-                </ButtonGroup>
-              </Stack>
-            </Stack>
-          )}
-
-          {/* Dice Display */}
-          <Stack spacing={2}>
-            {diceRows.map((rowSize, rowIndex) => (
-              <Stack key={rowIndex} direction="row" justifyContent="space-evenly">
-                {Array.from({ length: rowSize }, (_, columnIndex) => {
-                  const i = rowIndex * firstRowSize + columnIndex;
-                  const DieIcon =
-                    isDamagedDie(i) || counterData.used.includes(i)
-                      ? CloseIcon
-                      : DiceIconNative;
-                  return (
-                    <Fab
-                      key={i}
-                      onClick={() => !isDamagedDie(i) && handleUsedToggle(i)}
-                      sx={DIE_FAB_SX}
-                      color={isDamagedDie(i) ? "error" : "primary"}
+                    <Button
+                      disabled={counterData.horrorLimit === 0}
+                      onClick={handleHorrorLimitDecrement}
                     >
-                      <DieIcon
-                        sx={DIE_ICON_SX}
-                        color={isHorrorDie(i) ? "secondary" : "inherit"}
-                      />
-                    </Fab>
-                  );
-                })}
+                      −
+                    </Button>
+                    <Button
+                      disabled={counterData.horrorLimit >= counterData.limit}
+                      onClick={handleHorrorLimitIncrement}
+                    >
+                      +
+                    </Button>
+                  </ButtonGroup>
+                </Stack>
+                <Stack direction="row" spacing={1} flexGrow={1}>
+                  <IconButton color="error" onClick={handleDamageReset}>
+                    <DamageIcon />
+                  </IconButton>
+                  <ButtonGroup
+                    size="small"
+                    variant="contained"
+                    fullWidth
+                    color="error"
+                  >
+                    <Button
+                      disabled={counterData.damage === 0}
+                      onClick={handleDamageDecrement}
+                    >
+                      −
+                    </Button>
+                    <Button
+                      disabled={counterData.damage >= counterData.limit}
+                      onClick={handleDamageIncrement}
+                    >
+                      +
+                    </Button>
+                  </ButtonGroup>
+                </Stack>
+                <Stack direction="row" spacing={1} flexGrow={1}>
+                  <IconButton
+                    onClick={handleUsedReset}
+                    color="primary"
+                    disabled={counterData.used.length === 0}
+                  >
+                    <DiceIcon />
+                  </IconButton>
+                  <ButtonGroup
+                    size="small"
+                    variant="contained"
+                    fullWidth
+                    color="primary"
+                  >
+                    <Button
+                      onClick={handleLimitDecrement}
+                      disabled={counterData.limit <= 1}
+                    >
+                      −
+                    </Button>
+                    <Button onClick={handleLimitIncrement}>+</Button>
+                  </ButtonGroup>
+                </Stack>
               </Stack>
-            ))}
-          </Stack>
+            )}
 
-          {/* Assignment Section */}
-          {isGM && (
-            <Select
-              value={counterData.group}
-              onChange={(e) => handleGroupChange(Number(e.target.value))}
-              size="small"
-            >
-              {getAllGroups(
-                gameState.scene.customGroups,
-                gameState.scene.deletedGroups,
-              ).map((group) => (
-                <MenuItem key={group.id} value={group.id}>
-                  <Stack direction="row" spacing={1} alignItems="center">
-                    {renderGroupIcon(group)}
-                    <span>{getGroupName(group, gameState.groupNames)}</span>
-                  </Stack>
-                </MenuItem>
+            {/* Dice Display */}
+            <Stack spacing={2}>
+              {diceRows.map((rowSize, rowIndex) => (
+                <Stack
+                  key={rowIndex}
+                  direction="row"
+                  justifyContent="space-evenly"
+                >
+                  {Array.from({ length: rowSize }, (_, columnIndex) => {
+                    const i = rowIndex * firstRowSize + columnIndex;
+                    const DieIcon =
+                      isDamagedDie(i) || counterData.used.includes(i)
+                        ? CloseIcon
+                        : DiceIconNative;
+                    return (
+                      <Fab
+                        key={i}
+                        onClick={() => !isDamagedDie(i) && handleUsedToggle(i)}
+                        sx={DIE_FAB_SX}
+                        color={isDamagedDie(i) ? "error" : "primary"}
+                      >
+                        <DieIcon
+                          sx={DIE_ICON_SX}
+                          color={isHorrorDie(i) ? "secondary" : "inherit"}
+                        />
+                      </Fab>
+                    );
+                  })}
+                </Stack>
               ))}
-            </Select>
-          )}
-          {/* Unassigned characters always belong to the GM, so there's nothing to choose */}
-          {isGM && counterData.group !== UNASSIGNED_GROUP_ID && (
-            <Select
-              value={counterData.assignedTo}
-              onChange={(e) => handleAssignmentChange(e.target.value)}
-              size="small"
-            >
-              <MenuItem value={GM_ASSIGNEE}>GM</MenuItem>
-              {players.map((player) => (
-                <MenuItem key={player.id} value={player.id}>
-                  {player.name}
-                </MenuItem>
-              ))}
-            </Select>
-          )}
-          {!isGM && (
-            <Typography variant="caption" sx={{ color: "text.secondary" }}>
-              Assigned to:{" "}
-              {getAssigneeLabel(
-                counterData.assignedTo,
-                currentPlayerId,
-                players,
-              )}
-            </Typography>
-          )}
-        </Stack>
-      </CardContent>
-    </Card>
+            </Stack>
+
+            {/* Assignment Section */}
+            {isGM && (
+              <Select
+                value={counterData.group}
+                onChange={(e) => handleGroupChange(Number(e.target.value))}
+                size="small"
+              >
+                {getAllGroups(
+                  gameState.scene.customGroups,
+                  gameState.scene.deletedGroups,
+                ).map((group) => (
+                  <MenuItem key={group.id} value={group.id}>
+                    <Stack direction="row" spacing={1} alignItems="center">
+                      {renderGroupIcon(group)}
+                      <span>{getGroupName(group, gameState.groupNames)}</span>
+                    </Stack>
+                  </MenuItem>
+                ))}
+              </Select>
+            )}
+            {/* Unassigned characters always belong to the GM, so there's nothing to choose */}
+            {isGM && counterData.group !== UNASSIGNED_GROUP_ID && (
+              <Select
+                value={counterData.assignedTo}
+                onChange={(e) => handleAssignmentChange(e.target.value)}
+                size="small"
+              >
+                <MenuItem value={GM_ASSIGNEE}>GM</MenuItem>
+                {players.map((player) => (
+                  <MenuItem key={player.id} value={player.id}>
+                    {player.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            )}
+            {!isGM && (
+              <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                Assigned to:{" "}
+                {getAssigneeLabel(
+                  counterData.assignedTo,
+                  currentPlayerId,
+                  players,
+                )}
+              </Typography>
+            )}
+          </Stack>
+        </AccordionDetails>
+      </Accordion>
+    </div>
   );
 }
