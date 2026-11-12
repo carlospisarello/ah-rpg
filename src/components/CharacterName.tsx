@@ -63,7 +63,10 @@ export function CharacterName({
       >
         {isGM ? (
           <ButtonBase
-            onClick={onToggleVisibility}
+            onClick={(event) => {
+              event.stopPropagation();
+              onToggleVisibility();
+            }}
             disabled={isVisibilityButtonDisabled}
             aria-label={isCharacterHidden ? "Show character" : "Hide character"}
             title={isCharacterHidden ? "Show character" : "Hide character"}
@@ -108,7 +111,10 @@ export function CharacterName({
             component="button"
             variant="h6"
             noWrap
-            onClick={onCenterOnCharacter}
+            onClick={(event) => {
+              event.stopPropagation();
+              onCenterOnCharacter();
+            }}
             disabled={!isGM && isCharacterHidden}
             sx={{
               minWidth: 0,

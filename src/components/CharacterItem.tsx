@@ -267,7 +267,12 @@ export function CharacterItem({
               : undefined
           }
         >
-          <Stack direction="row" spacing={1} alignItems="center">
+          <Stack
+            direction="row"
+            spacing={1}
+            alignItems="center"
+            sx={{ width: "100%", marginRight: 2 }}
+          >
             {drag && <DragIndicatorIcon sx={{ cursor: "grab" }} />}
             <CharacterName
               name={character.name}
@@ -285,7 +290,7 @@ export function CharacterItem({
             />
           </Stack>
         </AccordionSummary>
-        <AccordionDetails>
+        <AccordionDetails sx={{ paddingTop: 0 }}>
           <Stack spacing={2} justifyContent="center">
             {/* Control Buttons */}
             {canInteract && (
@@ -299,6 +304,8 @@ export function CharacterItem({
                   <IconButton
                     color="secondary"
                     onClick={handleHorrorLimitReset}
+                    aria-label="Reset horror limit"
+                    title="Reset horror limit"
                   >
                     <HorrorIcon />
                   </IconButton>
@@ -323,7 +330,12 @@ export function CharacterItem({
                   </ButtonGroup>
                 </Stack>
                 <Stack direction="row" spacing={1} flexGrow={1}>
-                  <IconButton color="error" onClick={handleDamageReset}>
+                  <IconButton
+                    color="error"
+                    onClick={handleDamageReset}
+                    aria-label="Heal all damage"
+                    title="Heal all damage"
+                  >
                     <DamageIcon />
                   </IconButton>
                   <ButtonGroup
@@ -351,6 +363,8 @@ export function CharacterItem({
                     onClick={handleUsedReset}
                     color="primary"
                     disabled={counterData.used.length === 0}
+                    aria-label="Refill dice"
+                    title="Refill dice"
                   >
                     <DiceIcon />
                   </IconButton>
